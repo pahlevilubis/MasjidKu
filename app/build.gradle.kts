@@ -8,12 +8,17 @@ android {
     namespace = "com.masjidku.tv"
     compileSdk = 35
 
+    // Nomor build dari GitHub Actions = kode versi (dipakai pembaruan otomatis untuk membandingkan versi)
+    val nomorBuild = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
+    val repo = System.getenv("GITHUB_REPOSITORY") ?: "pahlevilubis/MasjidKu"
+
     defaultConfig {
         applicationId = "com.masjidku.tv"
         minSdk = 21 // Android 5.0 ke atas (TV lama tetap bisa)
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = nomorBuild
+        versionName = "1.1.$nomorBuild"
+        buildConfigField("String", "URL_PEMBARUAN", "\"https://github.com/$repo/releases/latest/download/versi.json\"")
     }
 
     // Kunci tanda tangan dari GitHub Secrets (KEYSTORE_BASE64, KEYSTORE_PASSWORD).

@@ -46,6 +46,7 @@ data class Tampilan(
     val peringatanJam: Boolean = false,
     val belumDiatur: Boolean = true,
     val pratinjau: Boolean = false,
+    val pembaruan: String = "",
 )
 
 /** Mesin utama: menghitung jadwal, menentukan layar, membunyikan adzan/beep. */
@@ -68,6 +69,9 @@ object Mesin {
     private var kunciFase = ""
     private var kunciImsak = ""
     @Volatile var faseTeks = ""
+        private set
+    /** Fase sebenarnya (bukan pratinjau), dipakai pembaruan otomatis untuk mencari waktu senggang. */
+    @Volatile var faseAsli: Fase? = null
         private set
 
     @Volatile private var pratinjauMode = -1
@@ -170,6 +174,7 @@ object Mesin {
         }
         val menit5 = intArrayOf(j[Hisab.SUBUH], j[Hisab.DZUHUR], j[Hisab.ASHAR], j[Hisab.MAGHRIB], j[Hisab.ISYA])
         val asli = Fase.hitung(detik, menit5, subuhBesok, atur)
+        faseAsli = asli
 
         // bunyi & munculkan layar hanya untuk kejadian nyata (bukan pratinjau)
         val kunci = "$hari-${asli.mode}-${asli.sholat}"
@@ -296,6 +301,7 @@ object Mesin {
             peringatanJam = !Jam.ntpOk && tahun < 2025,
             belumDiatur = !c.sudahDiatur,
             pratinjau = pratinjau,
+            pembaruan = Pembaru.teksLayar(),
         )
     }
 

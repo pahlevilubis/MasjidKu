@@ -16,11 +16,15 @@ Diatur sepenuhnya dari **HP lewat browser** (tanpa aplikasi tambahan).
 - Jam diambil dari **internet (NTP)**, tidak bergantung jam TV
 - Muncul sendiri saat TV dinyalakan, saat adzan, dan kembali ke jadwal bila TV dipakai aplikasi lain
 - Panel HP: `http://<ip-tv>:8080` + PIN (PIN & kode QR tampil di TV saat tombol **OK** remote ditekan)
+- **Pembaruan lewat internet**: TV memeriksa `versi.json` di rilis terbaru tiap 6 jam, mengunduh APK
+  (cek ukuran, SHA-256, sertifikat), lalu memasang saat layar senggang (tanpa konfirmasi di Android 12+
+  setelah pembaruan pertama; selain itu pengurus menekan Pasang di TV)
 
 ## Build
 APK dibangun otomatis oleh GitHub Actions setiap push ke `main`, lalu terbit di halaman **Releases**.
-Opsional: isi secret `KEYSTORE_BASE64` dan `KEYSTORE_PASSWORD` agar APK selalu bertanda tangan sama
-(pembaruan bisa langsung dipasang tanpa uninstall).
+**Wajib untuk pembaruan otomatis:** isi secret `KEYSTORE_BASE64` dan `KEYSTORE_PASSWORD` agar semua APK
+bertanda tangan sama. Tanpa itu APK memakai kunci debug acak dan TV hanya bisa diperbarui manual.
+Kode versi = nomor run GitHub Actions; `versi.json` ikut terbit di setiap rilis.
 
 ## Struktur
 - `app/src/main/java/com/masjidku/tv/inti/` — hisab, kalender, logika fase (Java murni, diuji di CI)

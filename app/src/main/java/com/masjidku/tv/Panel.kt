@@ -115,6 +115,14 @@ class Panel(private val ctx: Context) : NanoHTTPD(PORT) {
                 aturLauncher(ctx, aktif)
                 ok()
             }
+            uri == "/api/pembaruan/cek" && post -> {
+                Pembaru.cekSekarang()
+                ok()
+            }
+            uri == "/api/pembaruan/pasang" && post -> {
+                Pembaru.perbaruiSekarang()
+                ok()
+            }
             uri == "/api/sinkron-jam" && post -> {
                 val berhasil = Jam.sinkron()
                 json(Response.Status.OK, JSONObject().put("ok", berhasil).put("sumber", Jam.sumber))
@@ -215,6 +223,7 @@ class Panel(private val ctx: Context) : NanoHTTPD(PORT) {
             .put("android", "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
             .put("perangkat", "${Build.MANUFACTURER} ${Build.MODEL}")
             .put("adaLog", File(Repo.dirData, "crash.txt").exists())
+            .put("pembaruan", Pembaru.statusJson())
     }
 
     private fun bacaBadan(s: IHTTPSession): String {

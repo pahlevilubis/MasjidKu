@@ -74,6 +74,8 @@ class MainActivity : ComponentActivity() {
             izinOverlay = Panel.izinOverlay(this),
             launcher = Panel.launcherAktif(this),
             versi = BuildConfig.VERSION_NAME,
+            pembaruan = Pembaru.teks(),
+            adaPembaruan = Pembaru.status in setOf(Pembaru.TERSEDIA, Pembaru.SIAP, Pembaru.KONFIRMASI),
             perangkat = "${Build.MANUFACTURER} ${Build.MODEL} • Android ${Build.VERSION.RELEASE}",
         )
     }
@@ -104,6 +106,12 @@ class MainActivity : ComponentActivity() {
             KeyEvent.KEYCODE_BACK -> return true
             KeyEvent.KEYCODE_DPAD_RIGHT -> if (info != null) {
                 bukaIzin()
+                return true
+            }
+            KeyEvent.KEYCODE_DPAD_DOWN -> if (info != null) {
+                Pembaru.perbaruiSekarang()
+                Toast.makeText(this, "Memeriksa dan memasang pembaruan…", Toast.LENGTH_LONG).show()
+                info = null
                 return true
             }
             KeyEvent.KEYCODE_DPAD_LEFT -> if (info != null) {

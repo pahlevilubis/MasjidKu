@@ -55,11 +55,43 @@ jobs:
           ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee build.log
           cp app/build/outputs/apk/release/app-release.apk MasjidKu.apk
 
+      # versi.json dibaca aplikasi di TV untuk pembaruan otomatis
+      - name: Buat info versi (versi.json)
+        env:
+          RUN_NUMBER: ${{ github.run_number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -o pipefail
+          BT=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)
+          export SERTIFIKAT=$("$ANDROID_HOME/build-tools/$BT/apksigner" verify --print-certs MasjidKu.apk | grep -m1 "certificate SHA-256 digest" | sed 's/.*: //')
+          export SHA=$(sha256sum MasjidKu.apk | cut -d' ' -f1)
+          export UKURAN=$(stat -c%s MasjidKu.apk)
+          export CATATAN=$(git log -1 --pretty=%s)
+          python3 - <<'PY' 2>&1 | tee -a build.log
+          import json, os, sys
+          n = int(os.environ["RUN_NUMBER"])
+          data = {
+              "versionCode": n,
+              "versionName": f"1.1.{n}",
+              "apk": f"https://github.com/{os.environ['REPO']}/releases/download/build-{n}/MasjidKu.apk",
+              "ukuran": int(os.environ["UKURAN"]),
+              "sha256": os.environ["SHA"],
+              "sertifikat": os.environ["SERTIFIKAT"].lower(),
+              "catatan": os.environ.get("CATATAN", "")[:200],
+          }
+          if len(data["sertifikat"]) != 64 or len(data["sha256"]) != 64:
+              print("GAGAL: sertifikat/sha256 tidak terbaca", data); sys.exit(1)
+          json.dump(data, open("versi.json", "w"), ensure_ascii=False, indent=1)
+          print(json.dumps(data, ensure_ascii=False, indent=1))
+          PY
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: MasjidKu-APK
-          path: MasjidKu.apk
+          path: |
+            MasjidKu.apk
+            versi.json
           if-no-files-found: error
 
       # APK juga diterbitkan di halaman Releases supaya bisa diunduh langsung dari HP/TV
@@ -69,7 +101,9 @@ jobs:
           tag_name: build-${{ github.run_number }}
           name: MasjidKu build ${{ github.run_number }}
           body: APK MasjidKu (Android TV) siap pasang. Unduh MasjidKu.apk di bawah ini.
-          files: MasjidKu.apk
+          files: |
+            MasjidKu.apk
+            versi.json
           make_latest: true
 
       # Kalau gagal: simpan ringkasan error ke branch log-build supaya mudah diperbaiki

@@ -48,6 +48,8 @@ data class InfoSetup(
     val izinOverlay: Boolean?,
     val launcher: Boolean,
     val versi: String,
+    val pembaruan: String,
+    val adaPembaruan: Boolean,
     val perangkat: String,
 )
 
@@ -108,6 +110,18 @@ fun LayarUtama(t: Tampilan, info: InfoSetup?) {
                     .clip(RoundedCornerShape(sk.dp(6f)))
                     .background(p.aksen.copy(alpha = 0.9f))
                     .padding(horizontal = sk.dp(12f), vertical = sk.dp(3f))
+            )
+        }
+        if (t.pembaruan.isNotBlank() && info == null && t.mode == Fase.NORMAL) {
+            Text(
+                t.pembaruan, color = p.teks, fontSize = sk.sp(13f),
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = sk.dp(24f), bottom = sk.dp(64f))
+                    .clip(RoundedCornerShape(sk.dp(6f)))
+                    .background(p.latarBawah.copy(alpha = 0.85f))
+                    .border(sk.dp(1f), p.aksen, RoundedCornerShape(sk.dp(6f)))
+                    .padding(horizontal = sk.dp(10f), vertical = sk.dp(4f))
             )
         }
         if (info != null) LayarInfo(info, p, sk)
@@ -465,7 +479,11 @@ private fun LayarInfo(info: InfoSetup, p: Palet, sk: Skala) {
                     "Layar utama TV (launcher): " + if (info.launcher) "MasjidKu" else "bawaan TV",
                     color = p.teksRedup, fontSize = sk.sp(17f)
                 )
-                Text("Versi ${info.versi}  •  ${info.perangkat}", color = p.teksRedup, fontSize = sk.sp(15f))
+                Text(
+                    "Aplikasi versi ${info.versi}: ${info.pembaruan}" + if (info.adaPembaruan) "  (tekan ▼ untuk memasang)" else "",
+                    color = if (info.adaPembaruan) p.aksen else p.teksRedup, fontSize = sk.sp(17f)
+                )
+                Text(info.perangkat, color = p.teksRedup, fontSize = sk.sp(15f))
                 Spacer(Modifier.height(sk.dp(12f)))
                 Text("Tekan OK / Kembali untuk menutup  •  ◀ hentikan suara", color = p.teks, fontSize = sk.sp(16f))
             }

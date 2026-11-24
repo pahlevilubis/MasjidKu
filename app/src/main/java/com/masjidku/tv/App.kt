@@ -25,6 +25,7 @@ class App : Application() {
         pasangPenjagaCrash()
         Repo.muat(this)
         Mesin.mulai(this)
+        Pembaru.mulai(this)
         mulaiPanel()
 
         // TV yang bangun dari standby tidak mengirim BOOT_COMPLETED: tampilkan lagi saat layar menyala

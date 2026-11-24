@@ -176,6 +176,7 @@
     <div class="status-baris"><span>Layar MasjidKu terbuka</span><b id="stTampil">-</b></div>
     <div class="status-baris"><span>Perangkat</span><b id="stPerangkat">-</b></div>
     <div class="status-baris"><span>Versi aplikasi</span><b id="stVersi">-</b></div>
+    <div class="status-baris"><span>Pembaruan</span><b id="stPembaruan">-</b></div>
   </div>
 </section>
 
@@ -346,6 +347,20 @@
     <label class="f">Koreksi jam TV (detik), hanya dipakai bila tanpa internet</label>
     <input type="number" min="-3600" max="3600" data-k="koreksiJamDetik" data-t="int">
     <div class="grup-tombol"><button class="tombol kedua kecil" id="sinkronJam">Sinkronkan jam sekarang</button></div>
+  </div>
+  <div class="kartu">
+    <h2>Pembaruan aplikasi</h2>
+    <div class="status-baris"><span>Versi terpasang</span><b id="pbVersi">-</b></div>
+    <div class="status-baris"><span>Status</span><b id="pbStatus">-</b></div>
+    <progress id="pbProgres" class="sembunyi" max="100" value="0"></progress>
+    <p class="bantu" id="pbPesan"></p>
+    <p class="bantu" id="pbCatatan"></p>
+    <div class="grup-tombol">
+      <button class="tombol kedua kecil" id="pbCek">Periksa pembaruan</button>
+      <button class="tombol kecil" id="pbPasang" disabled>Perbarui sekarang</button>
+    </div>
+    <div class="sakelar" style="margin-top:8px"><span>Periksa & unduh otomatis<small>Bila TV terhubung internet. Dipasang otomatis saat layar senggang bila TV mengizinkan; bila tidak, TV menampilkan pemberitahuan.</small></span><input type="checkbox" data-k="updateOtomatis" data-t="bool"></div>
+    <p class="bantu" id="pbIzin"></p>
   </div>
   <div class="kartu">
     <h2>Keamanan</h2>
@@ -635,6 +650,15 @@ function perbaruiStatus(){
     $("stPeringatan").innerHTML=pr.map(function(t){return '<div class="peringatan">'+esc(t)+'</div>';}).join("");
     $("bantuIzin").textContent = s.izinOverlay===false ? "⚠ Izin tampil otomatis belum aktif. Tanpa izin ini, fitur muncul sendiri & kembali otomatis tidak berjalan." : "";
     $("sakelarLauncher").checked=!!s.launcher;
+    if(s.pembaruan){
+      var pb=s.pembaruan;
+      $("stPembaruan").textContent=pb.teks; $("pbVersi").textContent=pb.versi; $("pbStatus").textContent=pb.teks;
+      $("pbPesan").textContent=pb.pesan||"";
+      $("pbCatatan").textContent=(pb.versiBaru && pb.versiBaru!==pb.versi && pb.catatan) ? ("Isi versi "+pb.versiBaru+": "+pb.catatan) : "";
+      var pr=$("pbProgres"); pr.classList.toggle("sembunyi", pb.status!=="mengunduh"); pr.value=pb.progres||0;
+      $("pbPasang").disabled = ["tersedia","siap","konfirmasi","gagal"].indexOf(pb.status)<0 || (pb.status==="gagal" && !pb.versiBaru);
+      $("pbIzin").textContent = pb.izinPasang===false ? "⚠ Izin \"pasang aplikasi\" untuk MasjidKu belum aktif. Saat memperbarui, TV akan meminta izin ini; bila menunya tidak ada, teknisi bisa memberinya lewat ADB (lihat panduan)." : (pb.pasangDiam ? "TV ini bisa memasang pembaruan tanpa konfirmasi." : "");
+    }
     SLOT.forEach(function(sl){
       var el=document.querySelector('[data-berkas="'+sl[0]+'"]');
       if(el) el.textContent = s.audio[sl[0]] ? ("Tersimpan: "+s.audio[sl[0]]) : "Belum ada rekaman (memakai beep)";
@@ -671,6 +695,8 @@ $("sakelarLauncher").addEventListener("change",function(){
     toast(aktif ? "Aktif. Tekan Home di remote, lalu pilih MasjidKu → Selalu." : "Launcher dikembalikan ke bawaan TV");
   }).catch(function(er){toast(er.message);});
 });
+$("pbCek").onclick=function(){ api("POST","/api/pembaruan/cek",{}).then(function(){toast("Memeriksa pembaruan…");setTimeout(perbaruiStatus,2500);}).catch(function(er){toast(er.message);}); };
+$("pbPasang").onclick=function(){ if(!confirm("Perbarui MasjidKu sekarang? Layar TV akan berhenti sebentar. Bila muncul tombol Pasang/Install di TV, tekan dengan remote.")) return; api("POST","/api/pembaruan/pasang",{}).then(function(){toast("Pembaruan dimulai, lihat layar TV");}).catch(function(er){toast(er.message);}); };
 $("sinkronJam").onclick=function(){ api("POST","/api/sinkron-jam",{}).then(function(j){toast(j.ok?("Jam tersinkron dari "+j.sumber):"Gagal: TV tidak terhubung internet");perbaruiStatus();}).catch(function(er){toast(er.message);}); };
 $("muatUlang").onclick=function(){ api("POST","/api/muat-ulang",{}).then(function(){toast("Tampilan TV dimuat ulang");}).catch(function(er){toast(er.message);}); };
 $("lihatLog").onclick=function(){ api("GET","/api/log").then(function(j){ var p=$("isiLog"); p.textContent=j.log||"Tidak ada catatan error. Alhamdulillah."; p.classList.remove("sembunyi"); }).catch(function(er){toast(er.message);}); };

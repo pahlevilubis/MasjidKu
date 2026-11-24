@@ -82,6 +82,7 @@ data class Config(
     val munculSaatAdzan: Boolean = true,
     val pakaiNtp: Boolean = true,
     val koreksiJamDetik: Int = 0,
+    val updateOtomatis: Boolean = true,
     val pin: String = "",
     val sudahDiatur: Boolean = false,
 ) {
@@ -118,6 +119,7 @@ data class Config(
         o.put("redupPersen", redupPersen); o.put("redupSaatSholat", redupSaatSholat)
         o.put("autoKembaliMenit", autoKembaliMenit); o.put("munculSaatAdzan", munculSaatAdzan)
         o.put("pakaiNtp", pakaiNtp); o.put("koreksiJamDetik", koreksiJamDetik)
+        o.put("updateOtomatis", updateOtomatis)
         o.put("pin", pin); o.put("sudahDiatur", sudahDiatur)
         return o
     }
@@ -223,6 +225,7 @@ data class Config(
                 munculSaatAdzan = b("munculSaatAdzan", d.munculSaatAdzan),
                 pakaiNtp = b("pakaiNtp", d.pakaiNtp),
                 koreksiJamDetik = i("koreksiJamDetik", d.koreksiJamDetik, -3600, 3600),
+                updateOtomatis = b("updateOtomatis", d.updateOtomatis),
                 pin = s("pin", d.pin, 12).filter { it.isDigit() },
                 sudahDiatur = b("sudahDiatur", d.sudahDiatur),
             )
