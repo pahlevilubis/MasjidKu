@@ -1,0 +1,16 @@
+.gradle/
+build/
+app/build/
+local.properties
+.idea/
+*.iml
+.DS_Store
+captures/
+build.log
+tools/__pycache__/
+
+# Kunci dan rahasia: jangan pernah di-commit
+*.keystore
+*.jks
+key.properties
+.env

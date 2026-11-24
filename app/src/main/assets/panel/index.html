@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A3526">
+<title>Panel MasjidKu</title>
+<style>
+  :root{
+    --hijau:#0A3526; --hijau2:#06231A; --panel:#0F4331; --emas:#E9C46A; --krem:#F7F3E8;
+    --teks:#1d2a24; --redup:#5f6f67; --garis:#dfe6e2; --latar:#f3f6f4; --merah:#c8553d; --biru:#2f6f9f;
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif;background:var(--latar);color:var(--teks);font-size:16px;line-height:1.45;padding-bottom:96px}
+  header{background:linear-gradient(160deg,var(--hijau),var(--hijau2));color:var(--krem);padding:16px 16px 0;position:sticky;top:0;z-index:5;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+  header .atas{display:flex;align-items:center;gap:10px}
+  header h1{font-size:18px;margin:0;color:var(--emas);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chip{font-size:12px;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.12)}
+  .chip.ok::before{content:"● ";color:#7bd88f}
+  .chip.mati::before{content:"● ";color:#ff8a7a}
+  nav{display:flex;gap:4px;overflow-x:auto;margin-top:12px;scrollbar-width:none}
+  nav::-webkit-scrollbar{display:none}
+  nav button{flex:0 0 auto;background:none;border:0;color:#cfe0d7;padding:10px 12px;font-size:15px;border-bottom:3px solid transparent;cursor:pointer}
+  nav button.aktif{color:var(--emas);border-bottom-color:var(--emas);font-weight:600}
+  main{max-width:720px;margin:0 auto;padding:14px}
+  section{display:none}
+  section.aktif{display:block}
+  .kartu{background:#fff;border-radius:var(--r);padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.06);border:1px solid var(--garis)}
+  .kartu h2{font-size:17px;margin:0 0 10px;color:var(--hijau)}
+  .kartu h3{font-size:15px;margin:14px 0 8px;color:var(--hijau)}
+  .bantu{font-size:13px;color:var(--redup);margin:4px 0 0}
+  label.f{display:block;margin:12px 0 0;font-size:14px;font-weight:600}
+  label.f:first-of-type{margin-top:4px}
+  input[type=text],input[type=number],input[type=password],input[type=time],select,textarea{width:100%;font:inherit;padding:11px 12px;border:1px solid #cdd7d2;border-radius:10px;background:#fff;margin-top:6px;color:var(--teks)}
+  textarea{min-height:90px;resize:vertical}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--emas);border-color:var(--emas)}
+  .baris{display:flex;gap:10px}
+  .baris>*{flex:1;min-width:0}
+  .sakelar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--garis)}
+  .sakelar:first-child{border-top:0}
+  .sakelar span{font-size:15px}
+  .sakelar small{display:block;color:var(--redup);font-size:12.5px}
+  .sakelar input{appearance:none;-webkit-appearance:none;width:50px;height:30px;border-radius:99px;background:#c9d3ce;position:relative;flex:0 0 auto;cursor:pointer;transition:.2s}
+  .sakelar input::after{content:"";position:absolute;width:24px;height:24px;border-radius:50%;background:#fff;top:3px;left:3px;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+  .sakelar input:checked{background:var(--hijau)}
+  .sakelar input:checked::after{left:23px}
+  .tombol{display:inline-flex;align-items:center;justify-content:center;gap:6px;font:inherit;font-weight:600;border:0;border-radius:10px;padding:11px 16px;background:var(--hijau);color:#fff;cursor:pointer}
+  .tombol.kedua{background:#e8efeb;color:var(--hijau)}
+  .tombol.bahaya{background:#fbe9e5;color:var(--merah)}
+  .tombol.kecil{padding:7px 12px;font-size:14px}
+  .tombol:disabled{opacity:.5}
+  .grup-tombol{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .jadwal{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .jadwal div{background:var(--latar);border-radius:10px;padding:8px;text-align:center}
+  .jadwal b{display:block;font-size:19px;color:var(--hijau);font-variant-numeric:tabular-nums}
+  .jadwal small{font-size:12px;color:var(--redup)}
+  .jamtv{font-size:40px;font-weight:700;color:var(--hijau);font-variant-numeric:tabular-nums;line-height:1.1}
+  .status-baris{font-size:14px;padding:6px 0;border-top:1px dashed var(--garis);display:flex;justify-content:space-between;gap:10px}
+  .status-baris b{text-align:right}
+  .peringatan{background:#fff4e5;border:1px solid #f3c98b;color:#7a4b00;border-radius:10px;padding:10px 12px;font-size:14px;margin-top:10px}
+  .langkah{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-top:1px solid var(--garis)}
+  .langkah:first-child{border-top:0}
+  .langkah .ctl{display:flex;align-items:center;gap:8px}
+  .langkah .ctl button{width:38px;height:38px;border-radius:10px;border:1px solid #cdd7d2;background:#fff;font-size:20px;cursor:pointer;color:var(--hijau)}
+  .langkah .ctl output{min-width:44px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+  details.sholat{border:1px solid var(--garis);border-radius:12px;margin-bottom:10px;background:#fff}
+  details.sholat summary{padding:14px 16px;font-weight:700;color:var(--hijau);cursor:pointer;list-style:none;display:flex;justify-content:space-between}
+  details.sholat summary::after{content:"▾";color:var(--redup)}
+  details.sholat[open] summary::after{content:"▴"}
+  details.sholat .isi{padding:0 16px 14px}
+  .slot{border-top:1px solid var(--garis);padding:12px 0}
+  .slot:first-of-type{border-top:0}
+  .slot .nama{font-weight:600}
+  .slot .berkas{font-size:13px;color:var(--redup);word-break:break-all}
+  progress{width:100%;height:8px;margin-top:8px}
+  .tema{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .tema label{border:2px solid transparent;border-radius:12px;padding:6px;text-align:center;font-size:12px;cursor:pointer;background:var(--latar)}
+  .tema label i{display:block;height:44px;border-radius:8px;margin-bottom:4px}
+  .tema input{display:none}
+  .tema input:checked+label{border-color:var(--emas);background:#fff8e6}
+  .slide-item{border:1px solid var(--garis);border-radius:12px;padding:10px 12px;margin-bottom:10px;background:var(--latar)}
+  .slide-item .aksi{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}
+  .bar-simpan{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--garis);padding:12px 16px calc(12px + env(safe-area-inset-bottom));display:none;align-items:center;gap:10px;z-index:9;box-shadow:0 -4px 14px rgba(0,0,0,.08)}
+  .bar-simpan.tampil{display:flex}
+  .bar-simpan span{flex:1;font-size:14px;color:var(--redup)}
+  #toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#1d2a24;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:20;max-width:90%}
+  #toast.tampil{opacity:1}
+  #masuk{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,var(--hijau),var(--hijau2));padding:20px}
+  #masuk .kotak{background:#fff;border-radius:18px;padding:26px 22px;max-width:360px;width:100%;text-align:center}
+  #masuk h1{color:var(--hijau);margin:8px 0 4px;font-size:24px}
+  #masuk input{text-align:center;font-size:28px;letter-spacing:8px;font-variant-numeric:tabular-nums}
+  #masuk .tombol{width:100%;margin-top:14px;padding:14px}
+  .logo{width:64px;height:64px;border-radius:16px;background:linear-gradient(160deg,var(--hijau),var(--hijau2));display:inline-flex;align-items:center;justify-content:center;color:var(--emas);font-size:34px}
+  .sembunyi{display:none!important}
+  pre{white-space:pre-wrap;font-size:12px;background:var(--latar);padding:10px;border-radius:8px;max-height:260px;overflow:auto}
+  @media (max-width:420px){.jadwal{grid-template-columns:repeat(3,1fr)}.tema{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<div id="masuk">
+  <div class="kotak">
+    <div class="logo">🕌</div>
+    <h1>Panel MasjidKu</h1>
+    <p class="bantu" id="masukNama">Pengaturan layar jadwal sholat</p>
+    <p class="bantu">Tekan tombol <b>OK</b> di remote TV untuk melihat PIN.</p>
+    <input id="pinMasuk" type="password" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="PIN">
+    <button class="tombol" id="tombolMasuk">Masuk</button>
+    <p class="bantu" id="pesanMasuk" style="color:var(--merah)"></p>
+  </div>
+</div>
+
+<div id="aplikasi" class="sembunyi">
+<header>
+  <div class="atas">
+    <h1 id="judulMasjid">MasjidKu</h1>
+    <span class="chip" id="chipStatus">menghubungkan…</span>
+  </div>
+  <nav id="nav">
+    <button data-tab="beranda" class="aktif">Beranda</button>
+    <button data-tab="masjid">Masjid</button>
+    <button data-tab="jadwal">Jadwal</button>
+    <button data-tab="adzan">Adzan & Iqamah</button>
+    <button data-tab="tampilan">Tampilan</button>
+    <button data-tab="info">Info & Kas</button>
+    <button data-tab="sistem">Sistem</button>
+  </nav>
+</header>
+
+<main>
+<!-- ================= BERANDA ================= -->
+<section id="beranda" class="aktif">
+  <div class="kartu">
+    <div class="jamtv" id="stJam">--:--:--</div>
+    <div id="stTanggal" class="bantu">&nbsp;</div>
+    <div class="status-baris"><span>Layar sekarang</span><b id="stFase">-</b></div>
+    <div id="stPeringatan"></div>
+  </div>
+  <div class="kartu">
+    <h2>Jadwal hari ini</h2>
+    <div class="jadwal" id="stJadwal"></div>
+    <p class="bantu">Dihitung dengan kriteria Kemenag RI untuk lokasi masjid. Koreksi di menu <b>Jadwal</b>.</p>
+  </div>
+  <div class="kartu">
+    <h2>Coba di TV</h2>
+    <p class="bantu">Tampilkan contoh layar selama 20 detik untuk mengecek tampilan.</p>
+    <div class="baris" style="margin-top:8px">
+      <select id="prvSholat">
+        <option value="0">Subuh</option><option value="1" selected>Dzuhur</option><option value="2">Ashar</option>
+        <option value="3">Maghrib</option><option value="4">Isya</option>
+      </select>
+    </div>
+    <div class="grup-tombol">
+      <button class="tombol kedua kecil" data-prv="menjelang">Menjelang</button>
+      <button class="tombol kedua kecil" data-prv="adzan">Adzan</button>
+      <button class="tombol kedua kecil" data-prv="iqamah">Iqamah</button>
+      <button class="tombol kedua kecil" data-prv="sholat">Sholat</button>
+      <button class="tombol kedua kecil" data-prv="khutbah">Khutbah</button>
+      <button class="tombol bahaya kecil" data-prv="selesai">Kembali normal</button>
+    </div>
+    <h3>Suara</h3>
+    <div class="grup-tombol">
+      <button class="tombol kedua kecil" data-tes="beep">🔔 Tes beep</button>
+      <button class="tombol kedua kecil" data-tes="adzan_umum">▶ Adzan</button>
+      <button class="tombol kedua kecil" data-tes="adzan_subuh">▶ Adzan Subuh</button>
+      <button class="tombol kedua kecil" data-tes="tarhim">▶ Tarhim</button>
+      <button class="tombol bahaya kecil" data-tes="stop">■ Hentikan</button>
+    </div>
+  </div>
+  <div class="kartu">
+    <h2>Status TV</h2>
+    <div class="status-baris"><span>Sumber jam</span><b id="stNtp">-</b></div>
+    <div class="status-baris"><span>Tampil otomatis (izin)</span><b id="stIzin">-</b></div>
+    <div class="status-baris"><span>Layar MasjidKu terbuka</span><b id="stTampil">-</b></div>
+    <div class="status-baris"><span>Perangkat</span><b id="stPerangkat">-</b></div>
+    <div class="status-baris"><span>Versi aplikasi</span><b id="stVersi">-</b></div>
+  </div>
+</section>
+
+<!-- ================= MASJID ================= -->
+<section id="masjid">
+  <div class="kartu">
+    <h2>Identitas masjid</h2>
+    <label class="f">Nama masjid</label>
+    <input type="text" data-k="namaMasjid" data-t="str" maxlength="80">
+    <label class="f">Alamat / keterangan singkat</label>
+    <input type="text" data-k="alamat" data-t="str" maxlength="160">
+  </div>
+  <div class="kartu">
+    <h2>Lokasi untuk hitung jadwal</h2>
+    <label class="f">Pilih kota terdekat</label>
+    <select id="pilihKota"><option value="">— pilih kota —</option></select>
+    <p class="bantu">Untuk hasil paling tepat, isi koordinat masjid sendiri: buka Google Maps, tekan lama di lokasi masjid, lalu salin angka seperti <b>-6.2088, 106.8456</b>.</p>
+    <label class="f">Tempel koordinat dari Google Maps (opsional)</label>
+    <input type="text" id="tempelKoordinat" placeholder="-6.2088, 106.8456">
+    <div class="baris">
+      <div><label class="f">Lintang</label><input type="number" step="0.0001" data-k="lintang" data-t="float"></div>
+      <div><label class="f">Bujur</label><input type="number" step="0.0001" data-k="bujur" data-t="float"></div>
+    </div>
+    <label class="f">Zona waktu</label>
+    <select data-k="zona" data-t="int">
+      <option value="7">WIB (UTC+7)</option><option value="8">WITA (UTC+8)</option><option value="9">WIT (UTC+9)</option>
+    </select>
+    <label class="f">Nama kota (keterangan)</label>
+    <input type="text" data-k="namaKota" data-t="str" maxlength="60">
+  </div>
+</section>
+
+<!-- ================= JADWAL ================= -->
+<section id="jadwal">
+  <div class="kartu">
+    <h2>Koreksi menit per waktu</h2>
+    <p class="bantu">Pakai bila jadwal masjid ingin disamakan dengan jadwal cetak setempat. Angka positif = lebih lambat.</p>
+    <div id="daftarKoreksi" style="margin-top:8px"></div>
+  </div>
+  <div class="kartu">
+    <h2>Kriteria hisab</h2>
+    <p class="bantu">Bawaan sudah mengikuti Kemenag RI. Ubah hanya bila paham.</p>
+    <div class="baris">
+      <div><label class="f">Sudut Subuh (°)</label><input type="number" step="0.5" data-k="sudutSubuh" data-t="float"></div>
+      <div><label class="f">Sudut Isya (°)</label><input type="number" step="0.5" data-k="sudutIsya" data-t="float"></div>
+    </div>
+    <div class="baris">
+      <div><label class="f">Ihtiyath (menit)</label><input type="number" min="0" max="5" data-k="ihtiyath" data-t="int"></div>
+      <div><label class="f">Imsak (menit sebelum Subuh)</label><input type="number" min="0" max="30" data-k="imsakMenit" data-t="int"></div>
+    </div>
+    <label class="f">Ashar</label>
+    <select data-k="mazhabAshar" data-t="int">
+      <option value="1">Syafi'i / jumhur (bayangan 1×)</option>
+      <option value="2">Hanafi (bayangan 2×)</option>
+    </select>
+    <div class="grup-tombol"><button class="tombol kedua kecil" id="standarKemenag">Kembalikan ke standar Kemenag</button></div>
+  </div>
+  <div class="kartu">
+    <h2>Tanggal Hijriah</h2>
+    <div class="langkah"><span>Koreksi hari</span>
+      <div class="ctl"><button data-langkah="koreksiHijriah" data-d="-1">−</button><output data-out="koreksiHijriah">0</output><button data-langkah="koreksiHijriah" data-d="1">+</button></div>
+    </div>
+    <p class="bantu">Samakan dengan pengumuman awal bulan dari Kemenag (misal awal Ramadhan/Syawal).</p>
+    <div class="sakelar"><span>Ganti tanggal setelah Maghrib<small>Sesuai kaidah pergantian hari Hijriah</small></span><input type="checkbox" data-k="hijriahGantiMaghrib" data-t="bool"></div>
+  </div>
+</section>
+
+<!-- ================= ADZAN ================= -->
+<section id="adzan">
+  <div class="kartu">
+    <h2>Rekaman suara</h2>
+    <p class="bantu">Unggah rekaman MP3 dari HP. Bila rekaman tidak ada, TV memakai bunyi beep.</p>
+    <div id="daftarSlot"></div>
+  </div>
+  <div id="daftarSholat"></div>
+  <div class="kartu">
+    <h2>Hari Jumat</h2>
+    <div class="sakelar"><span>Mode Jumat<small>Dzuhur hari Jumat tampil sebagai "Jumat": adzan → khutbah → sholat, tanpa hitung mundur iqamah</small></span><input type="checkbox" data-k="jumatAktif" data-t="bool"></div>
+    <div class="baris">
+      <div><label class="f">Lama khutbah (menit)</label><input type="number" min="0" max="90" data-k="khutbahMenit" data-t="int"></div>
+      <div><label class="f">Lama sholat Jumat (menit)</label><input type="number" min="0" max="60" data-k="sholatJumatMenit" data-t="int"></div>
+    </div>
+  </div>
+  <div class="kartu">
+    <h2>Volume & lainnya</h2>
+    <label class="f">Volume rekaman adzan/tarhim: <span data-out="volumeAdzan"></span>%</label>
+    <input type="range" min="0" max="100" step="5" data-k="volumeAdzan" data-t="int" style="width:100%">
+    <label class="f">Volume beep: <span data-out="volumeBeep"></span>%</label>
+    <input type="range" min="0" max="100" step="5" data-k="volumeBeep" data-t="int" style="width:100%">
+    <p class="bantu">Volume ini relatif terhadap volume TV. Pastikan volume TV tidak nol/bisu.</p>
+    <div class="sakelar"><span>Beep saat Imsak<small>Berguna di bulan Ramadhan</small></span><input type="checkbox" data-k="beepImsak" data-t="bool"></div>
+  </div>
+</section>
+
+<!-- ================= TAMPILAN ================= -->
+<section id="tampilan">
+  <div class="kartu">
+    <h2>Tema warna</h2>
+    <div class="tema" id="pilihTema"></div>
+  </div>
+  <div class="kartu">
+    <h2>Isi layar</h2>
+    <div class="sakelar"><span>Tampilkan Imsak</span><input type="checkbox" data-k="tampilImsak" data-t="bool"></div>
+    <div class="sakelar"><span>Tampilkan Syuruq (terbit)</span><input type="checkbox" data-k="tampilSyuruq" data-t="bool"></div>
+    <div class="sakelar"><span>Tampilkan Dhuha</span><input type="checkbox" data-k="tampilDhuha" data-t="bool"></div>
+    <div class="sakelar"><span>Tampilkan detik pada jam</span><input type="checkbox" data-k="tampilDetik" data-t="bool"></div>
+  </div>
+  <div class="kartu">
+    <h2>Teks berjalan</h2>
+    <label class="f">Satu baris = satu pengumuman</label>
+    <textarea id="teksBerjalan" rows="5" placeholder="Contoh: Kajian rutin setiap Ahad ba'da Subuh"></textarea>
+    <label class="f">Kecepatan: <span data-out="kecepatanTeks"></span></label>
+    <input type="range" min="1" max="5" step="1" data-k="kecepatanTeks" data-t="int" style="width:100%">
+  </div>
+  <div class="kartu">
+    <h2>Redupkan layar</h2>
+    <div class="sakelar"><span>Layar gelap saat sholat & khutbah<small>Agar tidak mengganggu kekhusyukan</small></span><input type="checkbox" data-k="redupSaatSholat" data-t="bool"></div>
+    <div class="sakelar"><span>Redup otomatis malam hari</span><input type="checkbox" data-k="redupAktif" data-t="bool"></div>
+    <div class="baris">
+      <div><label class="f">Mulai</label><input type="time" data-k="redupMulai" data-t="str"></div>
+      <div><label class="f">Selesai</label><input type="time" data-k="redupSelesai" data-t="str"></div>
+    </div>
+    <label class="f">Tingkat redup: <span data-out="redupPersen"></span>%</label>
+    <input type="range" min="10" max="90" step="10" data-k="redupPersen" data-t="int" style="width:100%">
+  </div>
+</section>
+
+<!-- ================= INFO & KAS ================= -->
+<section id="info">
+  <div class="kartu">
+    <h2>Slide informasi</h2>
+    <p class="bantu">Tampil bergantian di kotak kanan layar (hadits, pengumuman, kajian, dll).</p>
+    <div id="daftarSlide" style="margin-top:10px"></div>
+    <button class="tombol kedua kecil" id="tambahSlide">＋ Tambah slide</button>
+    <label class="f">Ganti slide setiap (detik)</label>
+    <input type="number" min="4" max="120" data-k="slideDetik" data-t="int">
+  </div>
+  <div class="kartu">
+    <h2>Petugas Jumat</h2>
+    <div class="sakelar"><span>Tampilkan di slide</span><input type="checkbox" data-k="tampilPetugas" data-t="bool"></div>
+    <label class="f">Khatib</label><input type="text" data-k="khatib" data-t="str" maxlength="80">
+    <label class="f">Imam</label><input type="text" data-k="imam" data-t="str" maxlength="80">
+    <label class="f">Muadzin</label><input type="text" data-k="muadzin" data-t="str" maxlength="80">
+  </div>
+  <div class="kartu">
+    <h2>Laporan kas masjid</h2>
+    <div class="sakelar"><span>Tampilkan di slide</span><input type="checkbox" data-k="tampilKas" data-t="bool"></div>
+    <label class="f">Per tanggal</label><input type="text" data-k="kasTanggal" data-t="str" placeholder="21 Nov 2026" maxlength="60">
+    <label class="f">Pemasukan</label><input type="text" data-k="kasMasuk" data-t="str" placeholder="Rp 2.500.000" maxlength="60">
+    <label class="f">Pengeluaran</label><input type="text" data-k="kasKeluar" data-t="str" placeholder="Rp 750.000" maxlength="60">
+    <label class="f">Saldo</label><input type="text" data-k="kasSaldo" data-t="str" placeholder="Rp 12.300.000" maxlength="60">
+  </div>
+</section>
+
+<!-- ================= SISTEM ================= -->
+<section id="sistem">
+  <div class="kartu">
+    <h2>Perilaku layar</h2>
+    <div class="sakelar"><span>Muncul sendiri saat adzan<small>Bila TV sedang membuka aplikasi lain</small></span><input type="checkbox" data-k="munculSaatAdzan" data-t="bool"></div>
+    <label class="f">Kembali ke jadwal bila aplikasi lain dibuka lebih dari (menit, 0 = mati)</label>
+    <input type="number" min="0" max="240" data-k="autoKembaliMenit" data-t="int">
+    <div class="sakelar"><span>Jadikan layar utama TV (launcher)<small>Tombol Home membuka MasjidKu. Perlu dipilih sekali di TV.</small></span><input type="checkbox" id="sakelarLauncher"></div>
+    <p class="bantu" id="bantuIzin"></p>
+  </div>
+  <div class="kartu">
+    <h2>Jam</h2>
+    <div class="sakelar"><span>Ambil jam dari internet (NTP)<small>Disarankan. Jam tetap benar walau jam TV salah.</small></span><input type="checkbox" data-k="pakaiNtp" data-t="bool"></div>
+    <label class="f">Koreksi jam TV (detik), hanya dipakai bila tanpa internet</label>
+    <input type="number" min="-3600" max="3600" data-k="koreksiJamDetik" data-t="int">
+    <div class="grup-tombol"><button class="tombol kedua kecil" id="sinkronJam">Sinkronkan jam sekarang</button></div>
+  </div>
+  <div class="kartu">
+    <h2>Keamanan</h2>
+    <label class="f">PIN baru (4–12 angka)</label>
+    <input type="text" inputmode="numeric" id="pinBaru" maxlength="12" placeholder="kosongkan bila tidak diganti">
+    <p class="bantu">PIN baru berlaku setelah tombol Simpan ditekan.</p>
+  </div>
+  <div class="kartu">
+    <h2>Cadangan & perawatan</h2>
+    <div class="grup-tombol">
+      <button class="tombol kedua kecil" id="unduhCadangan">⬇ Unduh cadangan pengaturan</button>
+      <label class="tombol kedua kecil">⬆ Pulihkan dari berkas<input type="file" id="berkasPulih" accept=".json,application/json" class="sembunyi"></label>
+      <button class="tombol kedua kecil" id="muatUlang">↻ Muat ulang tampilan TV</button>
+      <button class="tombol kedua kecil" id="lihatLog">Lihat catatan error</button>
+    </div>
+    <pre id="isiLog" class="sembunyi"></pre>
+  </div>
+  <div class="kartu">
+    <button class="tombol bahaya" id="keluar">Keluar dari panel</button>
+  </div>
+</section>
+</main>
+
+<div class="bar-simpan" id="barSimpan">
+  <span>Ada perubahan yang belum disimpan</span>
+  <button class="tombol kedua" id="batal">Batal</button>
+  <button class="tombol" id="simpan">Simpan ke TV</button>
+</div>
+</div>
+<div id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+var KOTA = [
+  ["Banda Aceh",5.5483,95.3238,7],["Medan",3.5952,98.6722,7],["Padang",-0.9471,100.4172,7],["Pekanbaru",0.5071,101.4478,7],
+  ["Batam",1.0456,104.0305,7],["Tanjung Pinang",0.9186,104.4554,7],["Jambi",-1.6101,103.6131,7],["Palembang",-2.9761,104.7754,7],
+  ["Bengkulu",-3.8004,102.2655,7],["Bandar Lampung",-5.3971,105.2668,7],["Pangkal Pinang",-2.1316,106.1169,7],
+  ["Jakarta",-6.1754,106.8272,7],["Bogor",-6.5971,106.8060,7],["Depok",-6.4025,106.7942,7],["Tangerang",-6.1783,106.6319,7],
+  ["Bekasi",-6.2383,106.9756,7],["Serang",-6.1200,106.1503,7],["Bandung",-6.9175,107.6191,7],["Cirebon",-6.7320,108.5523,7],
+  ["Semarang",-6.9667,110.4167,7],["Yogyakarta",-7.7956,110.3695,7],["Surakarta (Solo)",-7.5755,110.8243,7],
+  ["Surabaya",-7.2575,112.7521,7],["Malang",-7.9666,112.6326,7],["Pontianak",-0.0263,109.3425,7],["Palangka Raya",-2.2161,113.9135,7],
+  ["Denpasar",-8.6705,115.2126,8],["Mataram",-8.5833,116.1167,8],["Kupang",-10.1772,123.6070,8],["Banjarmasin",-3.3186,114.5944,8],
+  ["Samarinda",-0.5022,117.1536,8],["Balikpapan",-1.2379,116.8529,8],["Tanjung Selor",2.8375,117.3653,8],["Manado",1.4748,124.8421,8],
+  ["Gorontalo",0.5435,123.0568,8],["Palu",-0.8917,119.8707,8],["Mamuju",-2.6748,118.8885,8],["Makassar",-5.1477,119.4327,8],
+  ["Kendari",-3.9985,122.5129,8],["Ternate",0.7893,127.3770,9],["Ambon",-3.6954,128.1814,9],["Sorong",-0.8762,131.2558,9],
+  ["Manokwari",-0.8615,134.0620,9],["Jayapura",-2.5337,140.7181,9],["Merauke",-8.4932,140.4018,9]
+];
+var NAMA_SHOLAT = ["Subuh","Dzuhur","Ashar","Maghrib","Isya"];
+var NAMA_KOREKSI = ["Imsak","Subuh","Syuruq (terbit)","Dhuha","Dzuhur","Ashar","Maghrib","Isya"];
+var SLOT = [
+  ["adzan_umum","Adzan (Dzuhur, Ashar, Maghrib, Isya)","Juga dipakai untuk Subuh bila rekaman Subuh tidak ada"],
+  ["adzan_subuh","Adzan Subuh","Dengan lafaz ash-shalatu khairun minan naum"],
+  ["tarhim","Tarhim / murottal sebelum adzan","Diputar saat layar menjelang adzan (bila dipilih)"]
+];
+var TEMA = [["Hijau Zamrud","#0A3526","#E9C46A"],["Biru Malam","#0D2341","#5CC8F2"],["Coklat Klasik","#3A2416","#E3B65A"],["Hitam Kontras","#111111","#FFD60A"]];
+
+var pin = "";
+var cfg = null, cfgAsli = null, kotor = false, statusTerakhir = null;
+
+function $(id){return document.getElementById(id);}
+function simpanLokal(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+function bacaLokal(k){try{return localStorage.getItem(k)||"";}catch(e){return "";}}
+function hapusLokal(k){try{localStorage.removeItem(k);}catch(e){}}
+function toast(t){var el=$("toast");el.textContent=t;el.classList.add("tampil");clearTimeout(toast.h);toast.h=setTimeout(function(){el.classList.remove("tampil");},2600);}
+function salin(o){return JSON.parse(JSON.stringify(o));}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+
+function api(metode, jalur, badan){
+  var opsi = {method:metode, headers:{"X-Pin":pin}, cache:"no-store"};
+  if (badan !== undefined){ opsi.headers["Content-Type"]="application/json; charset=utf-8"; opsi.body=JSON.stringify(badan); }
+  return fetch(jalur, opsi).then(function(r){
+    if (r.status===401){ keluar(); throw new Error("PIN diperlukan"); }
+    return r.json().then(function(j){ if(!r.ok || j.ok===false) throw new Error(j.pesan||("Gagal ("+r.status+")")); return j; });
+  });
+}
+
+// ---------- masuk ----------
+function masuk(p){
+  return fetch("/api/masuk",{method:"POST",headers:{"Content-Type":"application/json; charset=utf-8"},body:JSON.stringify({pin:p})})
+    .then(function(r){return r.json();})
+    .then(function(j){
+      if(!j.ok) throw new Error(j.pesan||"PIN salah");
+      pin=p; simpanLokal("masjidku_pin",p);
+      $("masuk").classList.add("sembunyi"); $("aplikasi").classList.remove("sembunyi");
+      return muatConfig().then(perbaruiStatus);
+    });
+}
+function keluar(){
+  pin=""; hapusLokal("masjidku_pin");
+  $("aplikasi").classList.add("sembunyi"); $("masuk").classList.remove("sembunyi");
+}
+$("tombolMasuk").onclick=function(){
+  var p=$("pinMasuk").value.trim(); $("pesanMasuk").textContent="";
+  if(!p){$("pesanMasuk").textContent="Isi PIN dulu";return;}
+  this.disabled=true; var b=this;
+  masuk(p).catch(function(e){$("pesanMasuk").textContent=e.message;}).then(function(){b.disabled=false;});
+};
+$("pinMasuk").addEventListener("keydown",function(e){if(e.key==="Enter")$("tombolMasuk").click();});
+$("keluar").onclick=keluar;
+
+// ---------- tab ----------
+Array.prototype.forEach.call(document.querySelectorAll("#nav button"),function(b){
+  b.onclick=function(){
+    document.querySelectorAll("#nav button").forEach(function(x){x.classList.toggle("aktif",x===b);});
+    document.querySelectorAll("main section").forEach(function(s){s.classList.toggle("aktif",s.id===b.dataset.tab);});
+    window.scrollTo(0,0);
+  };
+});
+
+// ---------- pengikat data ----------
+function ambil(o, jalur){ var p=jalur.split("."); for(var i=0;i<p.length;i++){ if(o==null) return undefined; o=o[p[i]]; } return o; }
+function setel(o, jalur, v){ var p=jalur.split("."); for(var i=0;i<p.length-1;i++){ o=o[p[i]]; } o[p[p.length-1]]=v; }
+
+function tandaiKotor(){ kotor = JSON.stringify(cfg)!==JSON.stringify(cfgAsli) || $("pinBaru").value.trim()!==""; $("barSimpan").classList.toggle("tampil",kotor); }
+
+function isiForm(){
+  document.querySelectorAll("[data-k]").forEach(function(el){
+    var v=ambil(cfg, el.dataset.k);
+    if(el.type==="checkbox") el.checked=!!v; else el.value=(v==null?"":v);
+  });
+  document.querySelectorAll("[data-out]").forEach(function(el){ el.textContent=ambil(cfg, el.dataset.out); });
+  $("teksBerjalan").value=(cfg.runningText||[]).join("\n");
+  $("judulMasjid").textContent=cfg.namaMasjid||"MasjidKu";
+  gambarSlide();
+  document.querySelectorAll("input[name=tema]").forEach(function(r){ r.checked=(+r.value===cfg.tema); });
+}
+
+function pasangPengikat(akar){
+  (akar||document).querySelectorAll("[data-k]").forEach(function(el){
+    if(el._terikat) return; el._terikat=true;
+    var ev=(el.type==="checkbox"||el.tagName==="SELECT")?"change":"input";
+    el.addEventListener(ev,function(){
+      var t=el.dataset.t, v;
+      if(t==="bool") v=el.checked;
+      else if(t==="int"){ v=parseInt(el.value,10); if(isNaN(v)) return; }
+      else if(t==="float"){ v=parseFloat(el.value); if(isNaN(v)) return; }
+      else v=el.value;
+      setel(cfg, el.dataset.k, v);
+      document.querySelectorAll('[data-out="'+el.dataset.k+'"]').forEach(function(o){o.textContent=v;});
+      if(el.dataset.k==="namaMasjid") $("judulMasjid").textContent=v||"MasjidKu";
+      tandaiKotor();
+    });
+  });
+}
+
+document.addEventListener("click",function(e){
+  var b=e.target.closest("[data-langkah]"); if(!b||!cfg) return;
+  var k=b.dataset.langkah, d=+b.dataset.d, v=(ambil(cfg,k)||0)+d;
+  var lim = k==="koreksiHijriah" ? 3 : 30; v=Math.max(-lim,Math.min(lim,v));
+  setel(cfg,k,v);
+  document.querySelectorAll('[data-out="'+k+'"]').forEach(function(o){o.textContent=(v>0?"+":"")+v;});
+  tandaiKotor();
+});
+
+// ---------- bangun bagian dinamis ----------
+function bangun(){
+  var sel=$("pilihKota");
+  KOTA.forEach(function(k,i){ var o=document.createElement("option"); o.value=i; o.textContent=k[0]+" ("+["WIB","WITA","WIT"][k[3]-7]+")"; sel.appendChild(o); });
+  sel.onchange=function(){
+    if(this.value==="") return; var k=KOTA[+this.value];
+    cfg.namaKota=k[0]; cfg.lintang=k[1]; cfg.bujur=k[2]; cfg.zona=k[3]; isiForm(); tandaiKotor();
+    toast("Lokasi diatur ke "+k[0]);
+  };
+  $("tempelKoordinat").addEventListener("change",function(){
+    var m=this.value.match(/(-?\d+(?:[.,]\d+)?)\s*[,; ]\s*(-?\d+(?:[.,]\d+)?)/);
+    if(!m){toast("Format koordinat tidak dikenali");return;}
+    var lat=parseFloat(m[1].replace(",",".")), lon=parseFloat(m[2].replace(",","."));
+    if(lat<-11.5||lat>6.5||lon<94||lon>142){toast("Koordinat di luar wilayah Indonesia");return;}
+    cfg.lintang=Math.round(lat*10000)/10000; cfg.bujur=Math.round(lon*10000)/10000;
+    // perkiraan zona dari bujur (perbatasan di Kalimantan & Maluku tidak lurus, jadi tetap diperiksa)
+    cfg.zona = (lon>=126.5 && lat<3.5) ? 9 : (lon>=114.5 ? 8 : 7);
+    isiForm(); tandaiKotor(); toast("Koordinat dipakai. Periksa zona waktunya.");
+  });
+
+  var kor=$("daftarKoreksi"), h="";
+  NAMA_KOREKSI.forEach(function(n,i){
+    h+='<div class="langkah"><span>'+n+'</span><div class="ctl"><button data-langkah="koreksi.'+i+'" data-d="-1">−</button><output data-out="koreksi.'+i+'">0</output><button data-langkah="koreksi.'+i+'" data-d="1">+</button></div></div>';
+  });
+  kor.innerHTML=h;
+
+  var ds=$("daftarSholat"); h="";
+  NAMA_SHOLAT.forEach(function(n,i){
+    var p="sholat."+i+".";
+    h+='<details class="sholat"'+(i===0?" open":"")+'><summary>'+n+'</summary><div class="isi">'+
+      '<div class="baris"><div><label class="f">Layar menjelang adzan (menit)</label><input type="number" min="0" max="60" data-k="'+p+'sebelumMenit" data-t="int"></div>'+
+      '<div><label class="f">Suara menjelang</label><select data-k="'+p+'sebelumSuara" data-t="int"><option value="0">Tanpa suara</option><option value="1">Beep</option><option value="2">Rekaman tarhim</option></select></div></div>'+
+      '<div class="baris"><div><label class="f">Lama layar adzan (menit)</label><input type="number" min="0" max="20" data-k="'+p+'adzanMenit" data-t="int"></div>'+
+      '<div><label class="f">Suara saat adzan</label><select data-k="'+p+'adzanSuara" data-t="int"><option value="0">Tanpa suara</option><option value="1">Beep</option><option value="2">Rekaman adzan</option></select></div></div>'+
+      '<div class="baris"><div><label class="f">Hitung mundur iqamah (menit)</label><input type="number" min="0" max="60" data-k="'+p+'iqamahMenit" data-t="int"></div>'+
+      '<div><label class="f">Layar sholat berlangsung (menit)</label><input type="number" min="0" max="60" data-k="'+p+'sholatMenit" data-t="int"></div></div>'+
+      '<div class="sakelar"><span>Beep saat iqamah habis</span><input type="checkbox" data-k="'+p+'beepIqamah" data-t="bool"></div>'+
+      '<p class="bantu">Urutan: menjelang → adzan → hitung mundur iqamah (mulai setelah layar adzan selesai) → layar sholat → normal.</p>'+
+      '</div></details>';
+  });
+  ds.innerHTML=h;
+
+  var dsl=$("daftarSlot"); h="";
+  SLOT.forEach(function(s){
+    h+='<div class="slot" data-slot="'+s[0]+'"><div class="nama">'+s[1]+'</div><div class="bantu">'+s[2]+'</div>'+
+      '<div class="berkas" data-berkas="'+s[0]+'">Belum ada rekaman</div>'+
+      '<div class="grup-tombol"><label class="tombol kedua kecil">Pilih MP3…<input type="file" accept="audio/*" class="sembunyi" data-unggah="'+s[0]+'"></label>'+
+      '<button class="tombol kedua kecil" data-tes="'+s[0]+'">▶ Putar di TV</button>'+
+      '<button class="tombol bahaya kecil" data-hapus="'+s[0]+'">Hapus</button></div>'+
+      '<progress class="sembunyi" max="100" value="0" data-prog="'+s[0]+'"></progress></div>';
+  });
+  dsl.innerHTML=h;
+
+  var pt=$("pilihTema"); h="";
+  TEMA.forEach(function(t,i){
+    h+='<input type="radio" name="tema" id="tema'+i+'" value="'+i+'"><label for="tema'+i+'"><i style="background:linear-gradient(135deg,'+t[1]+' 60%,'+t[2]+' 60%)"></i>'+t[0]+'</label>';
+  });
+  pt.innerHTML=h;
+  pt.addEventListener("change",function(e){ if(e.target.name==="tema"){ cfg.tema=+e.target.value; tandaiKotor(); } });
+
+  pasangPengikat();
+}
+
+// ---------- slide ----------
+function gambarSlide(){
+  var w=$("daftarSlide"), h="";
+  (cfg.slides||[]).forEach(function(s,i){
+    h+='<div class="slide-item"><input type="text" placeholder="Judul" maxlength="80" value="'+esc(s.judul)+'" data-slide="'+i+'" data-f="judul">'+
+      '<textarea rows="3" placeholder="Isi" maxlength="600" data-slide="'+i+'" data-f="isi">'+esc(s.isi)+'</textarea>'+
+      '<div class="aksi"><button class="tombol kedua kecil" data-geser="'+i+'" data-d="-1">↑</button><button class="tombol kedua kecil" data-geser="'+i+'" data-d="1">↓</button><button class="tombol bahaya kecil" data-hapus-slide="'+i+'">Hapus</button></div></div>';
+  });
+  w.innerHTML=h || '<p class="bantu">Belum ada slide.</p>';
+}
+$("daftarSlide").addEventListener("input",function(e){
+  var el=e.target; if(el.dataset.slide===undefined) return;
+  cfg.slides[+el.dataset.slide][el.dataset.f]=el.value; tandaiKotor();
+});
+$("daftarSlide").addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b) return;
+  if(b.dataset.hapusSlide!==undefined){ cfg.slides.splice(+b.dataset.hapusSlide,1); }
+  else if(b.dataset.geser!==undefined){ var i=+b.dataset.geser, j=i+(+b.dataset.d); if(j<0||j>=cfg.slides.length) return; var t=cfg.slides[i]; cfg.slides[i]=cfg.slides[j]; cfg.slides[j]=t; }
+  else return;
+  gambarSlide(); tandaiKotor();
+});
+$("tambahSlide").onclick=function(){ if(cfg.slides.length>=20){toast("Maksimal 20 slide");return;} cfg.slides.push({judul:"",isi:""}); gambarSlide(); tandaiKotor(); };
+$("teksBerjalan").addEventListener("input",function(){ cfg.runningText=this.value.split("\n").map(function(s){return s.trim();}).filter(function(s){return s;}); tandaiKotor(); });
+$("pinBaru").addEventListener("input",tandaiKotor);
+
+$("standarKemenag").onclick=function(){
+  cfg.sudutSubuh=20; cfg.sudutIsya=18; cfg.ihtiyath=2; cfg.mazhabAshar=1; cfg.imsakMenit=10;
+  cfg.koreksi=[0,0,0,0,0,0,0,0]; isiForm(); tandaiKotor(); toast("Kriteria Kemenag dipulihkan. Tekan Simpan.");
+};
+
+// ---------- muat & simpan ----------
+function muatConfig(){
+  return api("GET","/api/config").then(function(j){
+    delete j.ok; cfg=j; cfgAsli=salin(j); isiForm();
+    document.querySelectorAll('[data-out^="koreksi"]').forEach(function(o){var v=ambil(cfg,o.dataset.out);o.textContent=(v>0?"+":"")+v;});
+    $("pinBaru").value=""; tandaiKotor();
+  });
+}
+$("simpan").onclick=function(){
+  var b=this, data=salin(cfg), pb=$("pinBaru").value.trim();
+  if(pb){ if(!/^\d{4,12}$/.test(pb)){ toast("PIN harus 4–12 angka"); return; } data.pin=pb; }
+  b.disabled=true;
+  api("POST","/api/config",data).then(function(){
+    if(pb){ pin=pb; simpanLokal("masjidku_pin",pb); }
+    toast("Tersimpan. Layar TV langsung diperbarui ✓");
+    return muatConfig().then(perbaruiStatus);
+  }).catch(function(e){ toast("Gagal menyimpan: "+e.message); }).then(function(){ b.disabled=false; });
+};
+$("batal").onclick=function(){ cfg=salin(cfgAsli); $("pinBaru").value=""; isiForm(); document.querySelectorAll('[data-out^="koreksi"]').forEach(function(o){var v=ambil(cfg,o.dataset.out);o.textContent=(v>0?"+":"")+v;}); tandaiKotor(); };
+window.addEventListener("beforeunload",function(e){ if(kotor){ e.preventDefault(); e.returnValue=""; } });
+
+// ---------- status ----------
+function perbaruiStatus(){
+  if(!pin) return Promise.resolve();
+  return api("GET","/api/status").then(function(s){
+    statusTerakhir=s;
+    $("chipStatus").textContent="terhubung"; $("chipStatus").className="chip ok";
+    $("stJam").textContent=s.jam; $("stTanggal").textContent=s.masehi+" • "+s.hijriah; $("stFase").textContent=s.fase;
+    var j=s.jadwal, nm=[["imsak","Imsak"],["subuh","Subuh"],["terbit","Terbit"],["dhuha","Dhuha"],["dzuhur","Dzuhur"],["ashar","Ashar"],["maghrib","Maghrib"],["isya","Isya"]];
+    $("stJadwal").innerHTML=nm.map(function(x){return '<div><small>'+x[1]+'</small><b>'+j[x[0]]+'</b></div>';}).join("");
+    $("stNtp").textContent = s.ntp.ok ? ("Internet ("+s.ntp.sumber+")") : "Jam TV (tanpa internet)";
+    $("stIzin").textContent = s.izinOverlay===null ? "Tidak perlu (Android 5)" : (s.izinOverlay ? "Aktif ✓" : "Belum aktif");
+    $("stTampil").textContent = s.tampil ? "Ya" : "Tidak (aplikasi lain sedang dibuka)";
+    $("stPerangkat").textContent = s.perangkat+" • "+s.android; $("stVersi").textContent=s.versi;
+    var pr=[];
+    if(!s.ntp.ok) pr.push("Jam belum tersinkron dari internet. Pastikan TV tersambung internet, atau periksa jam TV.");
+    if(s.izinOverlay===false) pr.push("Izin tampil otomatis belum aktif: MasjidKu mungkin tidak muncul sendiri saat TV dinyalakan/adzan. Lihat panduan teknisi.");
+    if(s.ntp.ok && Math.abs(s.ntp.selisihDetik)>120) pr.push("Jam TV selisih "+Math.round(s.ntp.selisihDetik/60)+" menit dari jam internet. MasjidKu tetap memakai jam internet.");
+    $("stPeringatan").innerHTML=pr.map(function(t){return '<div class="peringatan">'+esc(t)+'</div>';}).join("");
+    $("bantuIzin").textContent = s.izinOverlay===false ? "⚠ Izin tampil otomatis belum aktif. Tanpa izin ini, fitur muncul sendiri & kembali otomatis tidak berjalan." : "";
+    $("sakelarLauncher").checked=!!s.launcher;
+    SLOT.forEach(function(sl){
+      var el=document.querySelector('[data-berkas="'+sl[0]+'"]');
+      if(el) el.textContent = s.audio[sl[0]] ? ("Tersimpan: "+s.audio[sl[0]]) : "Belum ada rekaman (memakai beep)";
+    });
+  }).catch(function(){ $("chipStatus").textContent="terputus"; $("chipStatus").className="chip mati"; });
+}
+setInterval(function(){ if(pin && !document.hidden) perbaruiStatus(); },3000);
+
+// ---------- aksi ----------
+document.addEventListener("click",function(e){
+  var b=e.target.closest("[data-tes]");
+  if(b){ api("POST","/api/tes",{suara:b.dataset.tes}).then(function(){toast(b.dataset.tes==="stop"?"Suara dihentikan":"Diputar di TV");}).catch(function(er){toast(er.message);}); return; }
+  b=e.target.closest("[data-prv]");
+  if(b){ api("POST","/api/pratinjau",{mode:b.dataset.prv,sholat:+$("prvSholat").value,detik:20}).then(function(){toast(b.dataset.prv==="selesai"?"Kembali normal":"Lihat layar TV (20 detik)");}).catch(function(er){toast(er.message);}); return; }
+  b=e.target.closest("[data-hapus]");
+  if(b){ if(!confirm("Hapus rekaman ini dari TV?")) return; api("POST","/api/audio/"+b.dataset.hapus+"/hapus",{}).then(function(){toast("Rekaman dihapus");perbaruiStatus();}).catch(function(er){toast(er.message);}); }
+});
+document.addEventListener("change",function(e){
+  var inp=e.target; if(!inp.dataset || !inp.dataset.unggah || !inp.files.length) return;
+  var slot=inp.dataset.unggah, f=inp.files[0];
+  if(f.size>25*1024*1024){ toast("Berkas terlalu besar (maks 25 MB)"); inp.value=""; return; }
+  var prog=document.querySelector('[data-prog="'+slot+'"]'); prog.classList.remove("sembunyi"); prog.value=0;
+  var fd=new FormData(); fd.append("berkas",f,f.name);
+  var x=new XMLHttpRequest(); x.open("POST","/api/audio/"+slot); x.setRequestHeader("X-Pin",pin);
+  x.upload.onprogress=function(ev){ if(ev.lengthComputable) prog.value=Math.round(ev.loaded/ev.total*100); };
+  x.onload=function(){ prog.classList.add("sembunyi"); inp.value=""; var j={}; try{j=JSON.parse(x.responseText);}catch(er){}
+    if(x.status===200 && j.ok){ toast("Rekaman tersimpan di TV ✓"); perbaruiStatus(); } else toast("Gagal unggah: "+(j.pesan||x.status)); };
+  x.onerror=function(){ prog.classList.add("sembunyi"); toast("Gagal unggah: koneksi terputus"); };
+  x.send(fd);
+});
+$("sakelarLauncher").addEventListener("change",function(){
+  var aktif=this.checked;
+  api("POST","/api/launcher",{aktif:aktif}).then(function(){
+    toast(aktif ? "Aktif. Tekan Home di remote, lalu pilih MasjidKu → Selalu." : "Launcher dikembalikan ke bawaan TV");
+  }).catch(function(er){toast(er.message);});
+});
+$("sinkronJam").onclick=function(){ api("POST","/api/sinkron-jam",{}).then(function(j){toast(j.ok?("Jam tersinkron dari "+j.sumber):"Gagal: TV tidak terhubung internet");perbaruiStatus();}).catch(function(er){toast(er.message);}); };
+$("muatUlang").onclick=function(){ api("POST","/api/muat-ulang",{}).then(function(){toast("Tampilan TV dimuat ulang");}).catch(function(er){toast(er.message);}); };
+$("lihatLog").onclick=function(){ api("GET","/api/log").then(function(j){ var p=$("isiLog"); p.textContent=j.log||"Tidak ada catatan error. Alhamdulillah."; p.classList.remove("sembunyi"); }).catch(function(er){toast(er.message);}); };
+$("unduhCadangan").onclick=function(){
+  var data=salin(cfgAsli); delete data.pin;
+  var blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="masjidku-cadangan-"+new Date().toISOString().slice(0,10)+".json"; document.body.appendChild(a); a.click(); a.remove();
+};
+$("berkasPulih").addEventListener("change",function(){
+  var f=this.files[0], inp=this; if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){
+    try{ var data=JSON.parse(r.result); }catch(e){ toast("Berkas bukan cadangan MasjidKu"); inp.value=""; return; }
+    if(!data || typeof data!=="object" || !("namaMasjid" in data)){ toast("Berkas bukan cadangan MasjidKu"); inp.value=""; return; }
+    if(!confirm("Ganti semua pengaturan dengan isi cadangan ini?")){ inp.value=""; return; }
+    delete data.pin;
+    api("POST","/api/config",data).then(function(){ toast("Pengaturan dipulihkan ✓"); return muatConfig(); }).catch(function(e){toast(e.message);}).then(function(){inp.value="";});
+  };
+  r.readAsText(f);
+});
+
+// ---------- mulai ----------
+bangun();
+fetch("/api/info",{cache:"no-store"}).then(function(r){return r.json();}).then(function(j){ if(j.nama) $("masukNama").textContent=j.nama; }).catch(function(){});
+var tersimpan=bacaLokal("masjidku_pin");
+if(tersimpan){ masuk(tersimpan).catch(function(){ hapusLokal("masjidku_pin"); }); }
+})();
+</script>
+</body>
+</html>

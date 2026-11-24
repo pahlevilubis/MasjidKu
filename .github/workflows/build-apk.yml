@@ -1,0 +1,89 @@
+name: Build APK MasjidKu
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ambil source code
+        uses: actions/checkout@v4
+
+      - name: Siapkan Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Uji hisab & logika jadwal (Java murni)
+        run: |
+          set -o pipefail
+          mkdir -p /tmp/uji
+          (javac -d /tmp/uji app/src/main/java/com/masjidku/tv/inti/*.java tools/UjiInti.java && \
+            java -cp /tmp/uji UjiInti tools/kemenag-jakarta-2024.txt) 2>&1 | tee build.log
+
+      # Kunci tanda tangan dari GitHub Secrets. Bila belum diisi, APK memakai kunci debug
+      # (tetap bisa dipasang, tapi pembaruan berikutnya harus uninstall dulu).
+      - name: Siapkan kunci tanda tangan (opsional)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ]; then
+            echo "::warning::Secret KEYSTORE_BASE64/KEYSTORE_PASSWORD belum diisi. APK ditandatangani kunci debug."
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.keystore"
+          ALIAS=$(keytool -list -keystore "$RUNNER_TEMP/release.keystore" -storepass "$KEYSTORE_PASSWORD" 2>/dev/null | grep -i PrivateKeyEntry | head -1 | cut -d, -f1)
+          echo "KEYSTORE_FILE=$RUNNER_TEMP/release.keystore" >> "$GITHUB_ENV"
+          echo "KEY_ALIAS=$ALIAS" >> "$GITHUB_ENV"
+          echo "Memakai alias kunci: $ALIAS"
+
+      # Runner ubuntu-latest sudah punya Android SDK bawaan (ANDROID_HOME)
+      - name: Build APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          chmod +x ./gradlew
+          set -o pipefail
+          ./gradlew assembleRelease --no-daemon --stacktrace 2>&1 | tee build.log
+          cp app/build/outputs/apk/release/app-release.apk MasjidKu.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MasjidKu-APK
+          path: MasjidKu.apk
+          if-no-files-found: error
+
+      # APK juga diterbitkan di halaman Releases supaya bisa diunduh langsung dari HP/TV
+      - name: Terbitkan di Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: MasjidKu build ${{ github.run_number }}
+          body: APK MasjidKu (Android TV) siap pasang. Unduh MasjidKu.apk di bawah ini.
+          files: MasjidKu.apk
+          make_latest: true
+
+      # Kalau gagal: simpan ringkasan error ke branch log-build supaya mudah diperbaiki
+      - name: Simpan log error
+        if: failure()
+        run: |
+          set +e
+          touch build.log
+          grep -n -E "^e: |error:|FAILED|What went wrong|Unresolved|Exception|GAGAL" -A4 build.log | head -400 > ringkas.txt
+          tail -250 build.log > ekor.txt
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git checkout --orphan log-build
+          git reset -q
+          git add -f ringkas.txt ekor.txt
+          git commit -q -m "Log gagal build ${{ github.run_number }} untuk ${{ github.sha }}"
+          git push -f origin log-build
