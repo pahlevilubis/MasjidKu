@@ -14,7 +14,8 @@ data class AturSholat(
     val beepIqamah: Boolean, // bunyi beep saat hitung mundur iqamah habis
 )
 
-data class Slide(val judul: String, val isi: String)
+/** Slide teks, atau slide gambar/video bila [media] berisi nama berkas di TV. */
+data class Slide(val judul: String, val isi: String, val media: String = "")
 
 data class Config(
     // Masjid & lokasi
@@ -60,6 +61,9 @@ data class Config(
         Slide("Adab di Masjid", "Rapikan alas kaki, jaga kebersihan, tidak bercakap keras, dan senyapkan HP."),
     ),
     val slideDetik: Int = 12,
+    val videoSuara: Boolean = false,
+    val volumeVideo: Int = 60,
+    val videoLayarPenuh: Boolean = false,
     val tampilPetugas: Boolean = true,
     val imam: String = "",
     val khatib: String = "",
@@ -110,8 +114,9 @@ data class Config(
         o.put("tampilDhuha", tampilDhuha); o.put("tampilDetik", tampilDetik)
         o.put("runningText", JSONArray(runningText)); o.put("kecepatanTeks", kecepatanTeks)
         val sl = JSONArray()
-        for (s in slides) sl.put(JSONObject().put("judul", s.judul).put("isi", s.isi))
+        for (s in slides) sl.put(JSONObject().put("judul", s.judul).put("isi", s.isi).put("media", s.media))
         o.put("slides", sl); o.put("slideDetik", slideDetik)
+        o.put("videoSuara", videoSuara); o.put("volumeVideo", volumeVideo); o.put("videoLayarPenuh", videoLayarPenuh)
         o.put("tampilPetugas", tampilPetugas); o.put("imam", imam); o.put("khatib", khatib); o.put("muadzin", muadzin)
         o.put("tampilKas", tampilKas); o.put("kasTanggal", kasTanggal); o.put("kasMasuk", kasMasuk)
         o.put("kasKeluar", kasKeluar); o.put("kasSaldo", kasSaldo)
@@ -171,9 +176,13 @@ data class Config(
             val slides = o.optJSONArray("slides")?.let { a ->
                 (0 until a.length()).mapNotNull { idx ->
                     val x = a.optJSONObject(idx) ?: return@mapNotNull null
-                    val sl = Slide(x.optString("judul", "").take(80), x.optString("isi", "").take(600))
-                    if (sl.judul.isBlank() && sl.isi.isBlank()) null else sl
-                }.take(20)
+                    val sl = Slide(
+                        x.optString("judul", "").take(80),
+                        x.optString("isi", "").take(600),
+                        Media.aman(x.optString("media", "")),
+                    )
+                    if (sl.judul.isBlank() && sl.isi.isBlank() && sl.media.isBlank()) null else sl
+                }.take(30)
             } ?: d.slides
 
             return Config(
@@ -207,6 +216,9 @@ data class Config(
                 kecepatanTeks = i("kecepatanTeks", d.kecepatanTeks, 1, 5),
                 slides = slides,
                 slideDetik = i("slideDetik", d.slideDetik, 4, 120),
+                videoSuara = b("videoSuara", d.videoSuara),
+                volumeVideo = i("volumeVideo", d.volumeVideo, 0, 100),
+                videoLayarPenuh = b("videoLayarPenuh", d.videoLayarPenuh),
                 tampilPetugas = b("tampilPetugas", d.tampilPetugas),
                 imam = s("imam", d.imam, 80),
                 khatib = s("khatib", d.khatib, 80),

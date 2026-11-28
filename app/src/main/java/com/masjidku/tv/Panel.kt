@@ -74,9 +74,21 @@ class Panel(private val ctx: Context) : NanoHTTPD(PORT) {
     private fun rute(s: IHTTPSession): Response {
         val uri = s.uri ?: "/"
         val post = s.method == Method.POST
-        val unggah = post && uri.startsWith("/api/audio/") && !uri.endsWith("/hapus")
+        val unggah = post && ((uri.startsWith("/api/audio/") && !uri.endsWith("/hapus")) || uri == "/api/media")
         // badan permintaan selalu dibaca habis (kecuali unggah berkas) agar koneksi tetap rapi
         val badan = if (post && !unggah) bacaBadan(s) else ""
+
+        // berkas video/gambar untuk pratinjau di panel (PIN lewat ?pin= karena dipakai tag <img>/<video>)
+        if (uri.startsWith("/media/")) {
+            if (s.parameters["pin"]?.firstOrNull() != Repo.cfg.value.pin) {
+                return json(Response.Status.UNAUTHORIZED, JSONObject().put("ok", false).put("pesan", "PIN diperlukan"))
+            }
+            val f = Media.berkas(uri.removePrefix("/media/"))
+                ?: return json(Response.Status.NOT_FOUND, JSONObject().put("ok", false).put("pesan", "Tidak ditemukan"))
+            val r = NanoHTTPD.newFixedLengthResponse(Response.Status.OK, Media.mime(f.name), f.inputStream(), f.length())
+            r.addHeader("Cache-Control", "max-age=3600")
+            return r
+        }
 
         if (!uri.startsWith("/api/")) return halaman()
 
@@ -103,6 +115,9 @@ class Panel(private val ctx: Context) : NanoHTTPD(PORT) {
             uri == "/api/config" && !post -> json(Response.Status.OK, Repo.cfg.value.keJson())
             uri == "/api/config" && post -> simpanConfig(badan)
             uri.startsWith("/api/audio/") && post -> audio(s, uri.removePrefix("/api/audio/"))
+            uri == "/api/media" && !post -> json(Response.Status.OK, daftarMedia())
+            uri == "/api/media" && post -> unggahMedia(s)
+            uri.startsWith("/api/media/") && uri.endsWith("/hapus") && post -> hapusMedia(uri)
             uri == "/api/tes" && post -> tes(badan)
             uri == "/api/pratinjau" && post -> pratinjau(badan)
             uri == "/api/muat-ulang" && post -> {
@@ -168,6 +183,49 @@ class Panel(private val ctx: Context) : NanoHTTPD(PORT) {
             .ifBlank { "mp3" }
         Repo.hapusAudio(slot)
         File(tmp).copyTo(File(Repo.dirAudio, "$slot.$ext"), overwrite = true)
+        return ok()
+    }
+
+    private fun daftarMedia(): JSONObject {
+        val dipakai = Repo.cfg.value.slides.map { it.media }.toSet()
+        val arr = JSONArray()
+        for (f in Media.daftar()) {
+            arr.put(
+                JSONObject()
+                    .put("nama", f.name)
+                    .put("jenis", if (Media.jenis(f.name) == Media.VIDEO) "video" else "gambar")
+                    .put("ukuran", f.length())
+                    .put("dipakai", f.name in dipakai)
+            )
+        }
+        return JSONObject().put("ok", true).put("berkas", arr)
+            .put("sisaRuang", Media.sisaRuang()).put("maks", Media.MAKS_BYTE)
+    }
+
+    private fun unggahMedia(s: IHTTPSession): Response {
+        val panjang = s.headers["content-length"]?.toLongOrNull() ?: 0L
+        if (panjang > Media.MAKS_BYTE + 1_000_000L) {
+            return gagal("Berkas terlalu besar (maksimal 300 MB). Perkecil video ke 720p.")
+        }
+        if (Media.sisaRuang() < panjang * 2 + 150L * 1024 * 1024) {
+            return gagal("Ruang penyimpanan TV tidak cukup. Hapus video lama dulu.")
+        }
+        val berkas = HashMap<String, String>()
+        s.parseBody(berkas)
+        val tmp = berkas["berkas"] ?: return gagal("Berkas tidak terkirim")
+        val namaAsli = s.parameters["berkas"]?.firstOrNull() ?: "media"
+        if (Media.jenis(namaAsli) == Media.TIDAK) {
+            return gagal("Jenis berkas tidak didukung. Pakai MP4 untuk video, JPG atau PNG untuk gambar.")
+        }
+        val nama = Media.simpan(File(tmp), namaAsli)
+        return json(Response.Status.OK, JSONObject().put("ok", true).put("nama", nama))
+    }
+
+    private fun hapusMedia(uri: String): Response {
+        val nama = uri.removePrefix("/api/media/").removeSuffix("/hapus")
+        if (!Media.hapus(nama)) return gagal("Berkas tidak ditemukan")
+        val c = Repo.cfg.value
+        if (c.slides.any { it.media == nama }) Repo.simpan(c.copy(slides = c.slides.filter { it.media != nama }))
         return ok()
     }
 

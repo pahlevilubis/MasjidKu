@@ -47,6 +47,9 @@ data class Tampilan(
     val belumDiatur: Boolean = true,
     val pratinjau: Boolean = false,
     val pembaruan: String = "",
+    val videoSuara: Boolean = false,
+    val volumeVideo: Int = 60,
+    val videoLayarPenuh: Boolean = false,
 )
 
 /** Mesin utama: menghitung jadwal, menentukan layar, membunyikan adzan/beep. */
@@ -243,7 +246,8 @@ object Mesin {
             val judul = if (c.kasTanggal.isNotBlank()) "Kas Masjid (${c.kasTanggal})" else "Kas Masjid"
             slides.add(Slide(judul, isi))
         }
-        slides.addAll(c.slides)
+        // slide media yang berkasnya sudah dihapus dilewati
+        slides.addAll(c.slides.filter { it.media.isBlank() || Media.berkas(it.media) != null })
         if (slides.isEmpty()) {
             slides.add(Slide("Jadwal Hari Ini", "Imsak ${Hisab.jam(j[0])}  •  Terbit ${Hisab.jam(j[2])}  •  Dhuha ${Hisab.jam(j[3])}"))
         }
@@ -302,6 +306,9 @@ object Mesin {
             belumDiatur = !c.sudahDiatur,
             pratinjau = pratinjau,
             pembaruan = Pembaru.teksLayar(),
+            videoSuara = c.videoSuara,
+            volumeVideo = c.volumeVideo,
+            videoLayarPenuh = c.videoLayarPenuh,
         )
     }
 

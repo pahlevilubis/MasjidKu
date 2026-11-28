@@ -82,6 +82,15 @@
   .tema input:checked+label{border-color:var(--emas);background:#fff8e6}
   .slide-item{border:1px solid var(--garis);border-radius:12px;padding:10px 12px;margin-bottom:10px;background:var(--latar)}
   .slide-item .aksi{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}
+  .media-tanda{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;color:var(--hijau);margin-bottom:6px}
+  .media-tanda img,.media-tanda .ikon{width:64px;height:40px;object-fit:cover;border-radius:6px;background:#1d2a24;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 auto}
+  .media-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--garis)}
+  .media-item:first-child{border-top:0}
+  .media-item img,.media-item .ikon{width:72px;height:46px;object-fit:cover;border-radius:8px;background:#1d2a24;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:20px;flex:0 0 auto}
+  .media-item .ket{flex:1;min-width:0;font-size:14px}
+  .media-item .ket b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .media-item .ket small{color:var(--redup)}
+  .media-item .aksi{display:flex;flex-direction:column;gap:6px}
   .bar-simpan{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--garis);padding:12px 16px calc(12px + env(safe-area-inset-bottom));display:none;align-items:center;gap:10px;z-index:9;box-shadow:0 -4px 14px rgba(0,0,0,.08)}
   .bar-simpan.tampil{display:flex}
   .bar-simpan span{flex:1;font-size:14px;color:var(--redup)}
@@ -307,8 +316,22 @@
 <!-- ================= INFO & KAS ================= -->
 <section id="info">
   <div class="kartu">
+    <h2>Video & gambar</h2>
+    <p class="bantu">Unggah video MP4 atau gambar (poster kajian, info infaq) dari HP, lalu jadikan slide. Video diputar sampai selesai lalu berganti ke slide berikutnya, dan berhenti otomatis saat menjelang adzan sampai sholat selesai.</p>
+    <div class="grup-tombol"><label class="tombol kecil">＋ Unggah video / gambar<input type="file" id="unggahMedia" accept="video/mp4,video/*,image/*" class="sembunyi"></label></div>
+    <progress id="progMedia" class="sembunyi" max="100" value="0"></progress>
+    <p class="bantu" id="ketUnggah"></p>
+    <div id="daftarMedia" style="margin-top:8px"></div>
+    <p class="bantu" id="ruangMedia"></p>
+    <div class="sakelar"><span>Suara video<small>Bawaan mati, agar tidak mengganggu yang sholat sunnah atau tadarus</small></span><input type="checkbox" data-k="videoSuara" data-t="bool"></div>
+    <label class="f">Volume video: <span data-out="volumeVideo"></span>%</label>
+    <input type="range" min="0" max="100" step="5" data-k="volumeVideo" data-t="int" style="width:100%">
+    <div class="sakelar"><span>Video layar penuh<small>Bila mati, video diputar di kotak slide dan jadwal tetap terlihat</small></span><input type="checkbox" data-k="videoLayarPenuh" data-t="bool"></div>
+    <p class="bantu">Tips: video MP4 720p paling lancar di TV. Maksimal 300 MB per berkas.</p>
+  </div>
+  <div class="kartu">
     <h2>Slide informasi</h2>
-    <p class="bantu">Tampil bergantian di kotak kanan layar (hadits, pengumuman, kajian, dll).</p>
+    <p class="bantu">Tampil bergantian di kotak kanan layar (hadits, pengumuman, kajian, dll). Slide video/gambar ditambahkan dari kartu di atas.</p>
     <div id="daftarSlide" style="margin-top:10px"></div>
     <button class="tombol kedua kecil" id="tambahSlide">＋ Tambah slide</button>
     <label class="f">Ganti slide setiap (detik)</label>
@@ -583,8 +606,16 @@ function bangun(){
 function gambarSlide(){
   var w=$("daftarSlide"), h="";
   (cfg.slides||[]).forEach(function(s,i){
-    h+='<div class="slide-item"><input type="text" placeholder="Judul" maxlength="80" value="'+esc(s.judul)+'" data-slide="'+i+'" data-f="judul">'+
-      '<textarea rows="3" placeholder="Isi" maxlength="600" data-slide="'+i+'" data-f="isi">'+esc(s.isi)+'</textarea>'+
+    var m=s.media||"", tanda="", isi;
+    if(m){
+      var vid=jenisMedia(m)==="video";
+      tanda='<div class="media-tanda">'+(vid?'<span class="ikon">▶</span>':'<img src="'+urlMedia(m)+'" alt="">')+'<span>'+(vid?'Video: ':'Gambar: ')+esc(m)+'</span></div>';
+      isi='';
+    } else {
+      isi='<textarea rows="3" placeholder="Isi" maxlength="600" data-slide="'+i+'" data-f="isi">'+esc(s.isi)+'</textarea>';
+    }
+    h+='<div class="slide-item">'+tanda+'<input type="text" placeholder="'+(m?'Judul (opsional)':'Judul')+'" maxlength="80" value="'+esc(s.judul)+'" data-slide="'+i+'" data-f="judul">'+
+      isi+
       '<div class="aksi"><button class="tombol kedua kecil" data-geser="'+i+'" data-d="-1">↑</button><button class="tombol kedua kecil" data-geser="'+i+'" data-d="1">↓</button><button class="tombol bahaya kecil" data-hapus-slide="'+i+'">Hapus</button></div></div>';
   });
   w.innerHTML=h || '<p class="bantu">Belum ada slide.</p>';
@@ -600,7 +631,7 @@ $("daftarSlide").addEventListener("click",function(e){
   else return;
   gambarSlide(); tandaiKotor();
 });
-$("tambahSlide").onclick=function(){ if(cfg.slides.length>=20){toast("Maksimal 20 slide");return;} cfg.slides.push({judul:"",isi:""}); gambarSlide(); tandaiKotor(); };
+$("tambahSlide").onclick=function(){ if(cfg.slides.length>=30){toast("Maksimal 30 slide");return;} cfg.slides.push({judul:"",isi:""}); gambarSlide(); tandaiKotor(); };
 $("teksBerjalan").addEventListener("input",function(){ cfg.runningText=this.value.split("\n").map(function(s){return s.trim();}).filter(function(s){return s;}); tandaiKotor(); });
 $("pinBaru").addEventListener("input",tandaiKotor);
 
@@ -609,12 +640,66 @@ $("standarKemenag").onclick=function(){
   cfg.koreksi=[0,0,0,0,0,0,0,0]; isiForm(); tandaiKotor(); toast("Kriteria Kemenag dipulihkan. Tekan Simpan.");
 };
 
+// ---------- video & gambar ----------
+function jenisMedia(n){ return /\.(mp4|m4v|webm|mkv|3gp)$/i.test(n) ? "video" : "gambar"; }
+function urlMedia(n){ return "/media/"+encodeURIComponent(n)+"?pin="+encodeURIComponent(pin); }
+function mb(b){ return (b/1048576).toFixed(b<10485760?1:0)+" MB"; }
+var infoMedia={maks:300*1048576, sisaRuang:0};
+function muatMedia(){
+  return api("GET","/api/media").then(function(j){
+    infoMedia=j;
+    var h="";
+    j.berkas.forEach(function(f){
+      var vid=f.jenis==="video";
+      h+='<div class="media-item">'+(vid?'<span class="ikon">▶</span>':'<img src="'+urlMedia(f.nama)+'" alt="" loading="lazy">')+
+        '<div class="ket"><b>'+esc(f.nama)+'</b><small>'+(vid?'Video':'Gambar')+' • '+mb(f.ukuran)+(f.dipakai?' • dipakai di slide':'')+'</small></div>'+
+        '<div class="aksi"><button class="tombol kedua kecil" data-jadikan="'+esc(f.nama)+'">Jadikan slide</button>'+
+        '<button class="tombol bahaya kecil" data-hapus-media="'+esc(f.nama)+'">Hapus</button></div></div>';
+    });
+    $("daftarMedia").innerHTML = h || '<p class="bantu">Belum ada video atau gambar.</p>';
+    $("ruangMedia").textContent = "Sisa ruang penyimpanan TV: "+mb(j.sisaRuang);
+  }).catch(function(){});
+}
+$("daftarMedia").addEventListener("click",function(e){
+  var b=e.target.closest("button"); if(!b) return;
+  if(b.dataset.jadikan){
+    if(cfg.slides.length>=30){ toast("Maksimal 30 slide"); return; }
+    cfg.slides.push({judul:"",isi:"",media:b.dataset.jadikan}); gambarSlide(); tandaiKotor();
+    toast("Ditambahkan ke daftar slide. Tekan Simpan ke TV.");
+  } else if(b.dataset.hapusMedia){
+    var n=b.dataset.hapusMedia;
+    if(!confirm("Hapus "+n+" dari TV? Slide yang memakainya ikut terhapus.")) return;
+    api("POST","/api/media/"+encodeURIComponent(n)+"/hapus",{}).then(function(){
+      var buang=function(arr){ return (arr||[]).filter(function(s){ return s.media!==n; }); };
+      cfg.slides=buang(cfg.slides); cfgAsli.slides=buang(cfgAsli.slides);
+      gambarSlide(); tandaiKotor(); muatMedia(); toast("Dihapus");
+    }).catch(function(er){ toast(er.message); });
+  }
+});
+$("unggahMedia").addEventListener("change",function(){
+  var inp=this, f=inp.files[0]; if(!f) return;
+  if(f.size>infoMedia.maks){ toast("Berkas terlalu besar (maks 300 MB). Perkecil video ke 720p."); inp.value=""; return; }
+  if(infoMedia.sisaRuang && f.size*2+150*1048576>infoMedia.sisaRuang){ toast("Ruang penyimpanan TV tidak cukup. Hapus video lama dulu."); inp.value=""; return; }
+  var prog=$("progMedia"); prog.classList.remove("sembunyi"); prog.value=0; $("ketUnggah").textContent="Mengunggah "+f.name+" ("+mb(f.size)+")…";
+  var fd=new FormData(); fd.append("berkas",f,f.name);
+  var x=new XMLHttpRequest(); x.open("POST","/api/media"); x.setRequestHeader("X-Pin",pin);
+  x.upload.onprogress=function(ev){ if(ev.lengthComputable) prog.value=Math.round(ev.loaded/ev.total*100); };
+  x.onload=function(){
+    prog.classList.add("sembunyi"); inp.value=""; var j={}; try{j=JSON.parse(x.responseText);}catch(er){}
+    if(x.status===200 && j.ok){ $("ketUnggah").textContent="Tersimpan di TV: "+j.nama+". Tekan \"Jadikan slide\" untuk menampilkannya."; muatMedia(); }
+    else { $("ketUnggah").textContent=""; toast("Gagal unggah: "+(j.pesan||x.status)); }
+  };
+  x.onerror=function(){ prog.classList.add("sembunyi"); $("ketUnggah").textContent=""; toast("Gagal unggah: koneksi terputus"); };
+  x.send(fd);
+});
+
 // ---------- muat & simpan ----------
 function muatConfig(){
   return api("GET","/api/config").then(function(j){
     delete j.ok; cfg=j; cfgAsli=salin(j); isiForm();
     document.querySelectorAll('[data-out^="koreksi"]').forEach(function(o){var v=ambil(cfg,o.dataset.out);o.textContent=(v>0?"+":"")+v;});
     $("pinBaru").value=""; tandaiKotor();
+    muatMedia();
   });
 }
 $("simpan").onclick=function(){

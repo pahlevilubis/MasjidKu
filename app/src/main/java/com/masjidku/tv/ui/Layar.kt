@@ -37,6 +37,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import com.masjidku.tv.Media
+import com.masjidku.tv.Slide
 import com.masjidku.tv.Tampilan
 import com.masjidku.tv.inti.Fase
 import kotlinx.coroutines.delay
@@ -62,6 +64,9 @@ fun LayarUtama(t: Tampilan, info: InfoSetup?) {
             .background(Brush.verticalGradient(listOf(p.latarAtas, p.latarBawah)))
     ) {
         val sk = Skala(maxWidth, maxHeight, LocalDensity.current)
+        // video tidak diputar saat menjelang adzan (dan layar adzan/iqamah/sholat tidak menampilkan slide)
+        val slidesAktif = if (t.mode == Fase.MENJELANG) t.slides.filter { Media.jenis(it.media) != Media.VIDEO } else t.slides
+        val putaran = rememberPutaran(slidesAktif, t.slideDetik)
         if (!t.siap) {
             Text(
                 "Memuat jadwal…", color = p.teks, fontSize = sk.sp(30f),
@@ -72,7 +77,11 @@ fun LayarUtama(t: Tampilan, info: InfoSetup?) {
                 Fase.ADZAN -> LayarAdzan(t, p, sk)
                 Fase.IQAMAH -> LayarIqamah(t, p, sk)
                 Fase.SHOLAT, Fase.KHUTBAH -> LayarSholat(t, p, sk)
-                else -> LayarNormal(t, p, sk)
+                else -> if (t.videoLayarPenuh && t.mode == Fase.NORMAL && putaran.slideVideo && info == null) {
+                    LayarVideoPenuh(t, p, sk, putaran)
+                } else {
+                    LayarNormal(t, p, sk, putaran)
+                }
             }
         }
         if (t.redup > 0f && t.mode != Fase.SHOLAT && t.mode != Fase.KHUTBAH) {
@@ -129,7 +138,7 @@ fun LayarUtama(t: Tampilan, info: InfoSetup?) {
 }
 
 @Composable
-private fun LayarNormal(t: Tampilan, p: Palet, sk: Skala) {
+private fun LayarNormal(t: Tampilan, p: Palet, sk: Skala, putaran: Putaran) {
     Column(
         Modifier
             .fillMaxSize()
@@ -192,7 +201,7 @@ private fun LayarNormal(t: Tampilan, p: Palet, sk: Skala) {
             }
             Spacer(Modifier.width(sk.dp(16f)))
             PanelSlide(
-                t, p, sk,
+                t, p, sk, putaran,
                 Modifier
                     .weight(1f)
                     .fillMaxHeight()
@@ -240,16 +249,8 @@ private fun KotakMenjelang(t: Tampilan, p: Palet, sk: Skala) {
 }
 
 @Composable
-private fun PanelSlide(t: Tampilan, p: Palet, sk: Skala, modifier: Modifier) {
-    val jumlah = t.slides.size
-    var indeks by remember { mutableIntStateOf(0) }
-    LaunchedEffect(jumlah, t.slideDetik) {
-        indeks = 0
-        while (true) {
-            delay(t.slideDetik * 1000L)
-            if (jumlah > 0) indeks = (indeks + 1) % jumlah
-        }
-    }
+private fun PanelSlide(t: Tampilan, p: Palet, sk: Skala, putaran: Putaran, modifier: Modifier) {
+    val jumlah = putaran.jumlah
     Column(
         modifier
             .clip(RoundedCornerShape(sk.dp(18f)))
@@ -257,26 +258,14 @@ private fun PanelSlide(t: Tampilan, p: Palet, sk: Skala, modifier: Modifier) {
             .border(sk.dp(1.5f), p.aksen.copy(alpha = 0.35f), RoundedCornerShape(sk.dp(18f)))
             .padding(horizontal = sk.dp(26f), vertical = sk.dp(18f))
     ) {
-        Crossfade(targetState = if (jumlah == 0) 0 else indeks % jumlah, animationSpec = tween(700), label = "slide",
-            modifier = Modifier.weight(1f)) { i ->
-            val s = t.slides.getOrNull(i)
-            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
-                if (s != null) {
-                    if (s.judul.isNotBlank()) {
-                        Text(
-                            s.judul, color = p.aksen, fontSize = sk.sp(28f), fontWeight = FontWeight.Bold,
-                            maxLines = 2, overflow = TextOverflow.Ellipsis
-                        )
-                        Spacer(Modifier.height(sk.dp(10f)))
-                    }
-                    Text(
-                        s.isi, color = p.teks, fontSize = sk.sp(23f), lineHeight = sk.sp(32f),
-                        maxLines = 7, overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
+        Crossfade(
+            targetState = putaran.langkah, animationSpec = tween(700), label = "slide",
+            modifier = Modifier.weight(1f)
+        ) { l ->
+            IsiSlide(putaran.slide(l), l, t, p, sk, putaran)
         }
         if (jumlah > 1) {
+            Spacer(Modifier.height(sk.dp(8f)))
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
@@ -287,10 +276,53 @@ private fun PanelSlide(t: Tampilan, p: Palet, sk: Skala, modifier: Modifier) {
                             .padding(horizontal = sk.dp(4f))
                             .size(sk.dp(9f))
                             .clip(CircleShape)
-                            .background(if (k == indeks % jumlah) p.aksen else p.teksRedup.copy(alpha = 0.4f))
+                            .background(if (k == putaran.indeks()) p.aksen else p.teksRedup.copy(alpha = 0.4f))
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun IsiSlide(s: Slide?, l: Int, t: Tampilan, p: Palet, sk: Skala, putaran: Putaran) {
+    if (s == null) return
+    val jenis = Media.jenis(s.media)
+    val berkas = if (jenis != Media.TIDAK) Media.berkas(s.media) else null
+    if (berkas == null) {
+        // slide teks
+        Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
+            if (s.judul.isNotBlank()) {
+                Text(
+                    s.judul, color = p.aksen, fontSize = sk.sp(28f), fontWeight = FontWeight.Bold,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis
+                )
+                Spacer(Modifier.height(sk.dp(10f)))
+            }
+            Text(
+                s.isi, color = p.teks, fontSize = sk.sp(23f), lineHeight = sk.sp(32f),
+                maxLines = 7, overflow = TextOverflow.Ellipsis
+            )
+        }
+        return
+    }
+    // slide gambar / video, judul (bila ada) tampil di atasnya
+    Column(Modifier.fillMaxSize()) {
+        if (s.judul.isNotBlank()) {
+            Text(
+                s.judul, color = p.aksen, fontSize = sk.sp(24f), fontWeight = FontWeight.Bold,
+                maxLines = 1, overflow = TextOverflow.Ellipsis
+            )
+            Spacer(Modifier.height(sk.dp(8f)))
+        }
+        val m = Modifier
+            .fillMaxWidth()
+            .weight(1f)
+            .clip(RoundedCornerShape(sk.dp(10f)))
+        if (jenis == Media.VIDEO) {
+            PemutarVideo(berkas, t.videoSuara, t.volumeVideo, m) { putaran.selesai(l) }
+        } else {
+            GambarBerkas(berkas, m)
         }
     }
 }

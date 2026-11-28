@@ -11,7 +11,8 @@ Diatur sepenuhnya dari **HP lewat browser** (tanpa aplikasi tambahan).
 - Alur otomatis: **menjelang adzan → adzan → hitung mundur iqamah → layar sholat** (redup) → normal
 - **Mode Jumat**: adzan → khutbah → sholat Jumat
 - Suara: **rekaman adzan** (umum & Subuh), **tarhim** sebelum adzan, atau beep; beep saat iqamah habis & saat Imsak
-- Slide informasi bergantian, **petugas Jumat**, **laporan kas**, **teks berjalan**
+- Slide informasi bergantian (teks, **gambar**, **video MP4**), **petugas Jumat**, **laporan kas**, **teks berjalan**;
+  video tanpa suara bawaan, bisa layar penuh, berhenti otomatis saat menjelang adzan s.d. sholat
 - 4 tema warna, redup otomatis malam hari
 - Jam diambil dari **internet (NTP)**, tidak bergantung jam TV
 - Muncul sendiri saat TV dinyalakan, saat adzan, dan kembali ke jadwal bila TV dipakai aplikasi lain
